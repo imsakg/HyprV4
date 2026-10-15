@@ -14,6 +14,13 @@ static bool rejects(const std::string& text, std::size_t line = 1) {
     return false;
 }
 
+static bool same(const hyprv4::Config& a, const hyprv4::Config& b) {
+    return a.gap == b.gap && a.outer_gap == b.outer_gap && a.border == b.border &&
+           a.master_count == b.master_count && a.ratio == b.ratio &&
+           a.workspace_count == b.workspace_count &&
+           a.focus_follows_mouse == b.focus_follows_mouse && a.terminal == b.terminal;
+}
+
 int main() {
     const hyprv4::Config defaults;
     CHECK(defaults.gap == 8);
@@ -100,4 +107,21 @@ int main() {
     }
     CHECK(rejects("# heading\n\nunknown=1", 3));
     CHECK(rejects("gap=1\nmissing equals", 2));
+
+    auto live = hyprv4::Config::parse(
+        "gap=3\nouter_gap=4\nborder=5\nmaster_count=2\nratio=.7\n"
+        "workspace_count=6\nfocus_follows_mouse=true\nterminal=foot");
+    const auto saved = live;
+    for (const auto* bad : {"gap=99\nratio=1", "terminal=other\nunknown=1",
+                            "gap=99\ngap=100", "workspace_count=0"}) {
+        bool failed = false;
+        try { live.reload(bad); }
+        catch (const std::invalid_argument&) { failed = true; }
+        CHECK(failed && same(live, saved));
+    }
+    live.reload("gap=42");
+    CHECK(live.gap == 42);
+    CHECK(live.terminal == "kitty" && live.ratio == 0.6 && !live.focus_follows_mouse);
+    live.reload("");
+    CHECK(same(live, defaults));
 }

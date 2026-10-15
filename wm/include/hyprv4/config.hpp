@@ -22,6 +22,9 @@ struct Config {
     bool focus_follows_mouse = false;
     std::string terminal = "kitty";
 
+    // Full replacement from defaults; parse errors never mutate the live object.
+    void reload(const std::string& text) { *this = parse(text); }
+
     static Config parse(const std::string& text) {
         Config result;
         std::istringstream input(text);
