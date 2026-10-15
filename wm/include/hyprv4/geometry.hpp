@@ -29,5 +29,14 @@ inline Rect intersection(Rect a,Rect b) {
   const auto h=std::max<std::int64_t>(0,static_cast<std::int64_t>(std::min(a.bottom(),b.bottom()))-y);
   return {x,y,static_cast<int>(w),static_cast<int>(h)};
 }
+inline int checked_int(std::int64_t value) {
+  if(value<std::numeric_limits<int>::min() || value>std::numeric_limits<int>::max()) throw std::overflow_error("coordinate overflow");
+  return static_cast<int>(value);
+}
+inline Rect translate(Rect r,int dx,int dy) {
+  r.require_valid(); r.x=checked_int(static_cast<std::int64_t>(r.x)+dx); r.y=checked_int(static_cast<std::int64_t>(r.y)+dy);
+  if(!r.valid()) throw std::overflow_error("rectangle edge overflow");
+  return r;
+}
 // GEOMETRY API
 } // namespace hyprv4
