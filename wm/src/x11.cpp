@@ -1,4 +1,5 @@
 #include "hyprv4/manager.hpp"
+#include "hyprv4/default_bindings.hpp"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <iostream>
@@ -15,7 +16,22 @@ int main(){
   XSelectInput(display,root,SubstructureRedirectMask|SubstructureNotifyMask|StructureNotifyMask);XSync(display,False);
   if(denied){std::cerr<<"another window manager owns this display\n";XCloseDisplay(display);return 2;}
   hyprv4::Manager manager;manager.set_output({0,0,DisplayWidth(display,DefaultScreen(display)),DisplayHeight(display,DefaultScreen(display))});
+  for(int id=2;id<=9;++id) manager.add_workspace(id);
+  const auto bindings=hyprv4::default_bindings();
+  const auto wm_protocols=XInternAtom(display,"WM_PROTOCOLS",False),wm_delete=XInternAtom(display,"WM_DELETE_WINDOW",False);
+  auto close_client=[&](int id){
+    Atom* protocols=nullptr;int count=0;bool supported=false;
+    if(XGetWMProtocols(display,static_cast<::Window>(id),&protocols,&count)) {for(int i=0;i<count;++i) if(protocols[i]==wm_delete) supported=true;if(protocols) XFree(protocols);}
+    if(!supported){std::cerr<<"client has no WM_DELETE_WINDOW protocol: "<<id<<'\n';return;}
+    XEvent message{};message.xclient.type=ClientMessage;message.xclient.window=static_cast<::Window>(id);message.xclient.message_type=wm_protocols;message.xclient.format=32;message.xclient.data.l[0]=static_cast<long>(wm_delete);message.xclient.data.l[1]=CurrentTime;
+    XSendEvent(display,static_cast<::Window>(id),False,NoEventMask,&message);
+  };
+  for(const char* symbol:{"j","k","space","f","q","Escape","1","2","3","4","5","6","7","8","9"}){
+    const auto code=XKeysymToKeycode(display,XStringToKeysym(symbol));if(!code) continue;
+    for(unsigned shift:{0u,static_cast<unsigned>(ShiftMask)}) for(unsigned locks:{0u,static_cast<unsigned>(LockMask),static_cast<unsigned>(Mod2Mask),static_cast<unsigned>(LockMask|Mod2Mask)}) XGrabKey(display,code,Mod4Mask|shift|locks,root,True,GrabModeAsync,GrabModeAsync);
+  }
   std::set<int> mapped,hidden;
+  bool running=true;
   auto adopt=[&](::Window window){
     const int id=client_id(window);XWindowAttributes attributes{};
     if(!id || !XGetWindowAttributes(display,window,&attributes) || attributes.override_redirect) return;
@@ -41,7 +57,7 @@ int main(){
     if(children) XFree(children);
   }
   apply();
-  while(true){XEvent event{};XNextEvent(display,&event);
+  while(running){XEvent event{};XNextEvent(display,&event);
     try{
       if(event.type==MapRequest){adopt(event.xmaprequest.window);}
       else if(event.type==DestroyNotify){const int id=client_id(event.xdestroywindow.window);manager.unmanage(id);mapped.erase(id);hidden.erase(id);}
@@ -51,8 +67,27 @@ int main(){
         else{XWindowChanges changes{};changes.x=e.x;changes.y=e.y;changes.width=e.width;changes.height=e.height;changes.border_width=e.border_width;changes.sibling=e.above;changes.stack_mode=e.detail;XConfigureWindow(display,e.window,static_cast<unsigned>(e.value_mask),&changes);}
       }
       else if(event.type==ConfigureNotify && event.xconfigure.window==root) manager.set_output({0,0,event.xconfigure.width,event.xconfigure.height});
+      else if(event.type==EnterNotify && event.xcrossing.mode==NotifyNormal) manager.pointer_enter(event.xcrossing.x_root,event.xcrossing.y_root);
+      else if(event.type==KeyPress){
+        const char* name=XKeysymToString(XLookupKeysym(&event.xkey,0));if(!name) continue;
+        const auto mask=event.xkey.state;hyprv4::ModifierMask normalized=0;
+        if(mask&ControlMask) normalized|=hyprv4::modifiers::Ctrl;if(mask&ShiftMask) normalized|=hyprv4::modifiers::Shift;
+        if(mask&Mod1Mask) normalized|=hyprv4::modifiers::Alt;if(mask&Mod4Mask) normalized|=hyprv4::modifiers::Super;
+        bindings.dispatch(hyprv4::KeyChord::from_event(name,normalized),[&](const hyprv4::Binding& binding){
+          const auto focused=manager.focused();
+          if(binding.action=="cycle") manager.cycle_focus(std::stoi(binding.arguments.at(0)));
+          else if(binding.action=="workspace") manager.switch_workspace(std::stoi(binding.arguments.at(0)));
+          else if(binding.action=="move-focused" && focused) manager.move_to_workspace(*focused,std::stoi(binding.arguments.at(0)));
+          else if(binding.action=="floating-focused" && focused) manager.toggle_floating(*focused);
+          else if(binding.action=="fullscreen-focused" && focused) manager.set_fullscreen(*focused,!manager.find(*focused)->fullscreen);
+          else if(binding.action=="close-focused" && focused) close_client(*focused);
+          else if(binding.action=="quit") running=false;
+        });
+      }
       // X11 EVENTS
       apply();
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';}
   }
+  for(int id:hidden) XMapWindow(display,static_cast<::Window>(id));
+  XUngrabKey(display,AnyKey,AnyModifier,root);XSetInputFocus(display,PointerRoot,RevertToPointerRoot,CurrentTime);XCloseDisplay(display);return 0;
 }
