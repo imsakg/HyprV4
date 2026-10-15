@@ -28,6 +28,13 @@ public:
   const Window* find(int id) const { auto i=clients_.find(id);return i==clients_.end()?nullptr:&i->second; }
   std::size_t size() const {return clients_.size();}
   int current_workspace() const {return current_;}
+  bool unmanage(int id) {
+    auto found=clients_.find(id);if(found==clients_.end()) return false;
+    auto& space=workspaces_.at(found->second.workspace);
+    space.windows.erase(std::remove(space.windows.begin(),space.windows.end(),id),space.windows.end());
+    if(space.focused==id) space.focused=space.windows.empty()?std::nullopt:std::optional<int>(space.windows.back());
+    clients_.erase(found);return true;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
