@@ -1,6 +1,8 @@
 #pragma once
 
 #include <charconv>
+#include <cmath>
+#include <locale>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -35,11 +37,24 @@ struct Config {
             else if (key == "border") result.border = integer(value, number, 0);
             else if (key == "master_count") result.master_count = integer(value, number, 1);
             else if (key == "workspace_count") result.workspace_count = integer(value, number, 1);
+            else if (key == "ratio") result.ratio = fraction(value, number);
         }
         return result;
     }
 
 private:
+    static double fraction(const std::string& value, std::size_t line) {
+        std::istringstream input(value);
+        input.imbue(std::locale::classic());
+        double result = 0.0;
+        input >> std::noskipws >> result;
+        if (!input || input.peek() != std::char_traits<char>::eof() ||
+            !std::isfinite(result) || result <= 0.0 || result >= 1.0) {
+            fail(line, "ratio must be finite and strictly between 0 and 1");
+        }
+        return result;
+    }
+
     [[noreturn]] static void fail(std::size_t line, const std::string& reason) {
         throw std::invalid_argument("line " + std::to_string(line) + ": " + reason);
     }

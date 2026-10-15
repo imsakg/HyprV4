@@ -52,4 +52,12 @@ int main() {
     const auto zero = hyprv4::Config::parse("gap=0\nouter_gap=0\nborder=0");
     CHECK(zero.gap == 0 && zero.outer_gap == 0 && zero.border == 0);
     CHECK(rejects("gap=0\nmaster_count=0", 2));
+
+    CHECK(hyprv4::Config::parse("ratio=0.75").ratio == 0.75);
+    CHECK(hyprv4::Config::parse("ratio=2.5e-1").ratio == 0.25);
+    CHECK(hyprv4::Config::parse("ratio=.5").ratio == 0.5);
+    for (const auto* value : {"", "0", "1", "-0.1", "1.1", "nan", "NaN", "inf", "-inf", "1e9999", "1e-9999", "0.5x", "0,5"}) {
+        CHECK(rejects(std::string("ratio=") + value));
+    }
+    CHECK(rejects("gap=0\nratio=1", 2));
 }
