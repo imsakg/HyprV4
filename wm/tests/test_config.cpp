@@ -67,4 +67,12 @@ int main() {
         CHECK(rejects(std::string("focus_follows_mouse=") + value));
     }
     CHECK(rejects("gap=0\nfocus_follows_mouse=yes", 2));
+
+    CHECK(hyprv4::Config::parse("terminal=foot").terminal == "foot");
+    CHECK(hyprv4::Config::parse("terminal=/opt/term --title=dev desk").terminal ==
+          "/opt/term --title=dev desk");
+    CHECK(rejects("terminal="));
+    CHECK(rejects(std::string("terminal=ki") + '\0' + "tty"));
+    CHECK(rejects("terminal=kitty\t--hold"));
+    CHECK(rejects("gap=0\nterminal=", 2));
 }

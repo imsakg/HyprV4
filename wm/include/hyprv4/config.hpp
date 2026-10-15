@@ -39,11 +39,22 @@ struct Config {
             else if (key == "workspace_count") result.workspace_count = integer(value, number, 1);
             else if (key == "ratio") result.ratio = fraction(value, number);
             else if (key == "focus_follows_mouse") result.focus_follows_mouse = boolean(value, number);
+            else if (key == "terminal") result.terminal = terminal_text(value, number);
         }
         return result;
     }
 
 private:
+    static std::string terminal_text(const std::string& value, std::size_t line) {
+        if (value.empty()) fail(line, "terminal must not be empty");
+        for (unsigned char byte : value) {
+            if (byte < 32 || byte == 127 || byte == '#') {
+                fail(line, "terminal must be single-line text without controls or #");
+            }
+        }
+        return value;
+    }
+
     static bool boolean(const std::string& value, std::size_t line) {
         if (value == "true") return true;
         if (value == "false") return false;
