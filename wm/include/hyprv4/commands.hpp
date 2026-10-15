@@ -40,6 +40,15 @@ public:
     else if(name=="configure"){arity(args,6,6);state.configure(number(args[1]),{number(args[2]),number(args[3]),number(args[4]),number(args[5])});}
     else if(name=="layout"){arity(args,2,2);if(args[1]=="master") state.set_layout(Layout::MasterStack);else if(args[1]=="monocle") state.set_layout(Layout::Monocle);else if(args[1]=="grid") state.set_layout(Layout::Grid);else if(args[1]=="bottom") state.set_layout(Layout::BottomStack);else throw std::invalid_argument("unknown layout");}
     else if(name=="config"){arity(args,2,2);reload(args[1]);}
+    else if(name=="bind"){arity(args,3,100);keys.bind(args[1],args[2],std::vector<std::string>(args.begin()+3,args.end()));}
+    else if(name=="unbind"){arity(args,2,2);keys.unbind(args[1]);}
+    else if(name=="key"){
+      arity(args,2,2);if(dispatch_depth_>=16) throw std::invalid_argument("binding recursion limit");
+      ++dispatch_depth_;std::string result="unbound";
+      try{keys.dispatch(args[1],[&](const Binding& binding){std::vector<std::string> action{binding.action};action.insert(action.end(),binding.arguments.begin(),binding.arguments.end());result=execute_tokens(action);});}
+      catch(...){--dispatch_depth_;throw;}
+      --dispatch_depth_;return result;
+    }
     // COMMAND ACTIONS
     else throw std::invalid_argument("unknown command: "+name);
     return "ok";
@@ -48,6 +57,7 @@ private:
   static void arity(const std::vector<std::string>& args,std::size_t min,std::size_t max){if(args.size()<min || args.size()>max) throw std::invalid_argument("wrong argument count for "+args[0]);}
   static int number(const std::string& value){int result=0;const auto parsed=std::from_chars(value.data(),value.data()+value.size(),result);if(parsed.ec!=std::errc{} || parsed.ptr!=value.data()+value.size()) throw std::invalid_argument("expected integer");return result;}
   static bool boolean(const std::string& value){if(value=="1" || value=="true") return true;if(value=="0" || value=="false") return false;throw std::invalid_argument("expected boolean");}
+  int dispatch_depth_=0;
   // COMMAND PRIVATE
 };
 // COMMAND API

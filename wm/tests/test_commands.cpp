@@ -12,5 +12,7 @@ int main(){
   runner.execute("layout grid");CHECK(runner.state.layout()==Layout::Grid);runner.execute("fullscreen 2 1");CHECK(runner.state.find(2)->fullscreen);
   runner.reload("gap=3\nratio=0.4\n");CHECK(runner.state.config().gap==3);
   bool reload=false;try{runner.reload("gap=99\nratio=nan");}catch(const std::invalid_argument&){reload=true;}CHECK(reload);CHECK(runner.state.config().gap==3);
+  runner.execute("bind Super+j cycle 1");CHECK(runner.execute("key Win+J")=="ok");CHECK(runner.execute("key Alt+x")=="unbound");
+  runner.execute("bind x key x");bool recursion=false;try{runner.execute("key x");}catch(const std::invalid_argument&){recursion=true;}CHECK(recursion);CHECK(runner.execute("key Alt+x")=="unbound");
 // NEXT TEST
 }
