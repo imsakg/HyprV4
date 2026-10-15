@@ -28,10 +28,12 @@ struct Config {
         std::size_t number = 0;
         while (std::getline(input, line)) {
             ++number;
+            line = trim(line.substr(0, line.find('#')));
+            if (line.empty()) continue;
             const auto equals = line.find('=');
             if (equals == std::string::npos) continue;
-            const auto key = line.substr(0, equals);
-            const auto value = line.substr(equals + 1);
+            const auto key = trim(line.substr(0, equals));
+            const auto value = trim(line.substr(equals + 1));
             if (key == "gap") result.gap = integer(value, number, 0);
             else if (key == "outer_gap") result.outer_gap = integer(value, number, 0);
             else if (key == "border") result.border = integer(value, number, 0);
@@ -45,6 +47,13 @@ struct Config {
     }
 
 private:
+    static std::string trim(const std::string& text) {
+        constexpr auto whitespace = " \t\r\v\f";
+        const auto start = text.find_first_not_of(whitespace);
+        if (start == std::string::npos) return {};
+        return text.substr(start, text.find_last_not_of(whitespace) - start + 1);
+    }
+
     static std::string terminal_text(const std::string& value, std::size_t line) {
         if (value.empty()) fail(line, "terminal must not be empty");
         for (unsigned char byte : value) {

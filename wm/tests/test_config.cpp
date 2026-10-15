@@ -75,4 +75,16 @@ int main() {
     CHECK(rejects(std::string("terminal=ki") + '\0' + "tty"));
     CHECK(rejects("terminal=kitty\t--hold"));
     CHECK(rejects("gap=0\nterminal=", 2));
+
+    const auto spaced = hyprv4::Config::parse(
+        "  # policy defaults\r\n\t\r\n  gap \t= 11  # inner gap\r\n"
+        " outer_gap= 12\r\n border=0 \n master_count = 2 \n ratio = .7 \n"
+        " workspace_count=4\n focus_follows_mouse = true # enable\n"
+        " terminal = foot --title=a desk  # literal command\n");
+    CHECK(spaced.gap == 11 && spaced.outer_gap == 12 && spaced.border == 0);
+    CHECK(spaced.master_count == 2 && spaced.ratio == 0.7 && spaced.workspace_count == 4);
+    CHECK(spaced.focus_follows_mouse && spaced.terminal == "foot --title=a desk");
+    CHECK(hyprv4::Config::parse("  # nothing\r\n\t\n").gap == 8);
+    CHECK(rejects("# header\n\n gap = invalid", 3));
+    CHECK(rejects("terminal= # no command"));
 }
