@@ -29,6 +29,15 @@ public:
     else if(name=="unmanage"){arity(args,2,2);if(!state.unmanage(number(args[1]))) throw std::invalid_argument("unknown client");}
     else if(name=="focus"){arity(args,2,2);if(!state.focus(number(args[1]))) throw std::invalid_argument("client not focusable");}
     else if(name=="cycle"){arity(args,2,2);state.cycle_focus(number(args[1]));}
+    else if(name=="workspace-add"){arity(args,2,2);state.add_workspace(number(args[1]));}
+    else if(name=="workspace"){arity(args,2,2);state.switch_workspace(number(args[1]));}
+    else if(name=="move"){arity(args,3,3);state.move_to_workspace(number(args[1]),number(args[2]));}
+    else if(name=="floating"){arity(args,2,2);state.toggle_floating(number(args[1]));}
+    else if(name=="fullscreen"){arity(args,3,3);state.set_fullscreen(number(args[1]),boolean(args[2]));}
+    else if(name=="minimize"){arity(args,3,3);state.minimize(number(args[1]),boolean(args[2]));}
+    else if(name=="close"){arity(args,2,2);state.request_close(number(args[1]));}
+    else if(name=="configure"){arity(args,6,6);state.configure(number(args[1]),{number(args[2]),number(args[3]),number(args[4]),number(args[5])});}
+    else if(name=="layout"){arity(args,2,2);if(args[1]=="master") state.set_layout(Layout::MasterStack);else if(args[1]=="monocle") state.set_layout(Layout::Monocle);else if(args[1]=="grid") state.set_layout(Layout::Grid);else if(args[1]=="bottom") state.set_layout(Layout::BottomStack);else throw std::invalid_argument("unknown layout");}
     // COMMAND ACTIONS
     else throw std::invalid_argument("unknown command: "+name);
     return "ok";
@@ -36,6 +45,7 @@ public:
 private:
   static void arity(const std::vector<std::string>& args,std::size_t min,std::size_t max){if(args.size()<min || args.size()>max) throw std::invalid_argument("wrong argument count for "+args[0]);}
   static int number(const std::string& value){int result=0;const auto parsed=std::from_chars(value.data(),value.data()+value.size(),result);if(parsed.ec!=std::errc{} || parsed.ptr!=value.data()+value.size()) throw std::invalid_argument("expected integer");return result;}
+  static bool boolean(const std::string& value){if(value=="1" || value=="true") return true;if(value=="0" || value=="false") return false;throw std::invalid_argument("expected boolean");}
   // COMMAND PRIVATE
 };
 // COMMAND API

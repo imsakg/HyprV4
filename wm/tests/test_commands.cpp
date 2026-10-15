@@ -8,5 +8,7 @@ int main(){
     CommandRunner runner;CHECK(runner.execute("manage 1 terminal")=="ok");runner.execute("manage 2 editor");runner.execute("focus 1");CHECK(runner.state.focused()==1);
   bool arity=false;try{runner.execute("focus 1 extra");}catch(const std::invalid_argument&){arity=true;}CHECK(arity);
   runner.execute("cycle 1");CHECK(runner.state.focused()==2);
+  runner.execute("workspace-add 2");runner.execute("move 2 2");runner.execute("workspace 2");runner.execute("floating 2");runner.execute("configure 2 10 20 300 200");CHECK(runner.state.find(2)->frame==Rect{10,20,300,200});
+  runner.execute("layout grid");CHECK(runner.state.layout()==Layout::Grid);runner.execute("fullscreen 2 1");CHECK(runner.state.find(2)->fullscreen);
 // NEXT TEST
 }
