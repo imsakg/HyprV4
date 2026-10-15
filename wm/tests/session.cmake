@@ -1,0 +1,8 @@
+execute_process(COMMAND "${CORE}" --config "${SOURCE}/examples/core.conf" INPUT_FILE "${SOURCE}/examples/session.commands" RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+if(NOT result EQUAL 0 OR NOT output MATCHES "\"workspace\":2" OR NOT output MATCHES "\"id\":2")
+  message(FATAL_ERROR "script failed: ${result} ${output} ${error}")
+endif()
+execute_process(COMMAND "${CORE}" --config "${SOURCE}/examples/missing.conf" RESULT_VARIABLE missing OUTPUT_QUIET ERROR_QUIET)
+if(NOT missing EQUAL 2)
+  message(FATAL_ERROR "missing config did not return exit 2")
+endif()

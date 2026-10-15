@@ -1,0 +1,10 @@
+# Scripted policy session. This does not open windows or spawn processes.
+manage 1 "Terminal"
+manage 2 "Editor"
+bind Super+j cycle 1
+key Win+j
+workspace-add 2
+move 2 2
+workspace 2
+layout grid
+state

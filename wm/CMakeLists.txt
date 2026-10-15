@@ -22,3 +22,7 @@ endif()
 if(BUILD_TESTING)
   add_test(NAME cli-version COMMAND ${CMAKE_COMMAND} -DCORE=$<TARGET_FILE:hyprv4-core> -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cli-smoke.cmake)
 endif()
+
+if(BUILD_TESTING)
+  add_test(NAME cli-session COMMAND ${CMAKE_COMMAND} -DCORE=$<TARGET_FILE:hyprv4-core> -DSOURCE=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/session.cmake)
+endif()
