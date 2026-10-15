@@ -53,5 +53,15 @@ inline std::vector<Rect> bottom_stack(Rect area,int count,const Config& c) {
   for(auto& r:result) r={r.y,r.x,r.height,r.width};
   return result;
 }
+enum class Layout { MasterStack, Monocle, Grid, BottomStack };
+inline std::vector<Rect> arrange(Layout layout,Rect area,int count,const Config& c={}) {
+  switch(layout){
+  case Layout::MasterStack:return master_stack(area,count,c);
+  case Layout::Monocle:return monocle(area,count,c);
+  case Layout::Grid:return grid_layout(area,count,c);
+  case Layout::BottomStack:return bottom_stack(area,count,c);
+  }
+  throw std::invalid_argument("unknown layout");
+}
 // LAYOUT API
 } // namespace hyprv4

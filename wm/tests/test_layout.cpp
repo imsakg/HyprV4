@@ -19,5 +19,8 @@ int main(){
   c.gap=0;c.ratio=0.5;
   auto bs=bottom_stack(Rect{10,20,400,200},3,c);CHECK(bs[0]==Rect{10,20,400,100});
   CHECK(bs[1]==Rect{10,120,200,100});CHECK(bs[2].right()==410);
+  CHECK(arrange(Layout::Grid,Rect{0,0,80,80},3,c).size()==3);
+  CHECK(arrange(Layout::Monocle,Rect{0,0,80,80},2,c)[1]==Rect{0,0,80,80});
+  bool invalid_layout=false;try{arrange(static_cast<Layout>(99),Rect{},0,c);}catch(const std::invalid_argument&){invalid_layout=true;}CHECK(invalid_layout);
 // NEXT TEST
 }
