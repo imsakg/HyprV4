@@ -87,4 +87,17 @@ int main() {
     CHECK(hyprv4::Config::parse("  # nothing\r\n\t\n").gap == 8);
     CHECK(rejects("# header\n\n gap = invalid", 3));
     CHECK(rejects("terminal= # no command"));
+
+    for (const auto* text : {"unknown=1", "Gap=1", "gap 8", "=8", "gap==8", "[layout]"}) {
+        CHECK(rejects(text));
+    }
+    for (const auto* key : {"gap", "outer_gap", "border", "master_count", "ratio",
+                            "workspace_count", "focus_follows_mouse", "terminal"}) {
+        const std::string value = std::string(key) == "terminal" ? "foot" :
+                                  std::string(key) == "focus_follows_mouse" ? "true" :
+                                  std::string(key) == "ratio" ? "0.7" : "2";
+        CHECK(rejects(std::string(key) + "=" + value + "\n# duplicate\n  " + key + " = " + value, 3));
+    }
+    CHECK(rejects("# heading\n\nunknown=1", 3));
+    CHECK(rejects("gap=1\nmissing equals", 2));
 }

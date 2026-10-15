@@ -3,6 +3,7 @@
 #include <charconv>
 #include <cmath>
 #include <locale>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -26,14 +27,16 @@ struct Config {
         std::istringstream input(text);
         std::string line;
         std::size_t number = 0;
+        std::set<std::string> seen;
         while (std::getline(input, line)) {
             ++number;
             line = trim(line.substr(0, line.find('#')));
             if (line.empty()) continue;
             const auto equals = line.find('=');
-            if (equals == std::string::npos) continue;
+            if (equals == std::string::npos) fail(number, "expected key=value");
             const auto key = trim(line.substr(0, equals));
             const auto value = trim(line.substr(equals + 1));
+            if (!seen.insert(key).second) fail(number, "duplicate key: " + key);
             if (key == "gap") result.gap = integer(value, number, 0);
             else if (key == "outer_gap") result.outer_gap = integer(value, number, 0);
             else if (key == "border") result.border = integer(value, number, 0);
@@ -42,6 +45,7 @@ struct Config {
             else if (key == "ratio") result.ratio = fraction(value, number);
             else if (key == "focus_follows_mouse") result.focus_follows_mouse = boolean(value, number);
             else if (key == "terminal") result.terminal = terminal_text(value, number);
+            else fail(number, "unknown key: " + key);
         }
         return result;
     }
