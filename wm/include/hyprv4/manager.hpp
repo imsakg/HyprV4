@@ -35,6 +35,11 @@ public:
     if(space.focused==id) space.focused=space.windows.empty()?std::nullopt:std::optional<int>(space.windows.back());
     clients_.erase(found);return true;
   }
+  std::optional<int> focused() const {return ws().focused;}
+  bool focus(int id) {
+    auto found=clients_.find(id);if(found==clients_.end() || found->second.workspace!=current_) return false;
+    ws().focused=id;return true;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
