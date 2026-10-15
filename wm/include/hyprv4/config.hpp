@@ -110,11 +110,12 @@ private:
     }
 
     static double fraction(const std::string& value, std::size_t line) {
-        std::istringstream input(value);
-        input.imbue(std::locale::classic());
+        const char* begin = value.data();
+        const char* end = begin + value.size();
+        if (begin != end && *begin == '+') ++begin;
         double result = 0.0;
-        input >> std::noskipws >> result;
-        if (!input || input.peek() != std::char_traits<char>::eof() ||
+        const auto parsed = std::from_chars(begin, end, result);
+        if (parsed.ec != std::errc{} || parsed.ptr != end ||
             !std::isfinite(result) || result <= 0.0 || result >= 1.0) {
             fail(line, "ratio must be finite and strictly between 0 and 1");
         }

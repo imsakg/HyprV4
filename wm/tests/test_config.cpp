@@ -1,5 +1,6 @@
 #include "hyprv4/config.hpp"
 #include "check.hpp"
+#include <cmath>
 #include <limits>
 #include <locale>
 #include <stdexcept>
@@ -172,4 +173,24 @@ int main() {
     std::locale::global(original_locale);
     CHECK(same(locale_config, precise));
     CHECK(locale_text.find(',') == std::string::npos);
+
+    for (double value : {std::numeric_limits<double>::denorm_min(),
+                         std::numeric_limits<double>::min(), std::nextafter(1.0, 0.0)}) {
+        auto boundary = defaults;
+        boundary.ratio = value;
+        CHECK(same(hyprv4::Config::parse(boundary.serialize()), boundary));
+    }
+    for (int exponent = -323; exponent < 0; ++exponent) {
+        for (double mantissa : {1.0, 2.5, 7.75}) {
+            auto tiny = defaults;
+            tiny.ratio = mantissa * std::pow(10.0, exponent);
+            CHECK(same(hyprv4::Config::parse(tiny.serialize()), tiny));
+        }
+    }
+    CHECK(hyprv4::Config::parse("ratio=4.9406564584124654e-324").ratio ==
+          std::numeric_limits<double>::denorm_min());
+    CHECK(hyprv4::Config::parse("ratio=+0.5").ratio == 0.5);
+    for (const auto* value : {"4.9406564584124654e-324junk", "0.5e", "0x1p-1", "+", "++0.5", "1e-324"}) {
+        CHECK(rejects(std::string("ratio=") + value));
+    }
 }
