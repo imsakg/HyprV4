@@ -19,5 +19,16 @@ inline std::vector<Rect> split(Rect area,int count,int gap,bool horizontal=false
   }
   return result;
 }
+inline std::vector<Rect> master_stack(Rect area,int count,const Config& c) {
+  c.validate(); area.require_valid();
+  if(count<0 || count>100000) throw std::invalid_argument("invalid window count");
+  const int masters=std::min(count,c.master_count);
+  if(count<=masters) return split(area,count,c.gap);
+  const int gap=std::min(c.gap,area.width),usable=area.width-gap;
+  const int width=static_cast<int>(usable*c.ratio);
+  auto result=split({area.x,area.y,width,area.height},masters,c.gap);
+  auto stack=split({area.x+width+gap,area.y,usable-width,area.height},count-masters,c.gap);
+  result.insert(result.end(),stack.begin(),stack.end()); return result;
+}
 // LAYOUT API
 } // namespace hyprv4
