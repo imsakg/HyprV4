@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 static bool bad_chord(const std::string& text) {
     try { (void)hyprv4::KeyChord::parse(text); }
@@ -96,4 +97,35 @@ int main() {
         catch (const std::invalid_argument&) { invalid_event = true; }
         CHECK(invalid_event);
     }
+
+    hyprv4::KeyBindings bindings;
+    CHECK(bindings.empty() && bindings.size() == 0);
+    CHECK(bindings.lookup("Super+Return") == nullptr);
+    std::string action = "launch";
+    std::vector<std::string> arguments = {"kitty", "--title=dev desk", "", std::string("a\0b", 3)};
+    bindings.bind("Super+Return", action, arguments);
+    action = "changed";
+    arguments[0] = "changed";
+    CHECK(!bindings.empty() && bindings.size() == 1);
+    const auto* launch = bindings.lookup(KeyChord::from_event("Enter", mods::Super | mods::CapsLock));
+    CHECK(launch != nullptr);
+    CHECK(launch->action == "launch");
+    CHECK(launch->arguments == std::vector<std::string>({"kitty", "--title=dev desk", "", std::string("a\0b", 3)}));
+    CHECK(bindings.lookup("Return") == nullptr);
+    bindings.bind(KeyChord::parse("Ctrl+Shift+x"), "workspace", {"3"});
+    CHECK(bindings.lookup("shift+control+X")->action == "workspace");
+    CHECK(bindings.lookup("shift+control+X")->arguments == std::vector<std::string>({"3"}));
+    bindings.bind("a", "noop");
+    CHECK(bindings.lookup("a")->arguments.empty());
+    CHECK(bindings.size() == 3);
+    for (const auto* invalid : {"", "  ", "launch app", "\tlaunch", "launch\n"}) {
+        bool failed = false;
+        try { bindings.bind("Super+z", invalid); }
+        catch (const std::invalid_argument&) { failed = true; }
+        CHECK(failed && bindings.lookup("Super+z") == nullptr && bindings.size() == 3);
+    }
+    bool malformed_bind = false;
+    try { bindings.bind("Ctrl++a", "noop"); }
+    catch (const std::invalid_argument&) { malformed_bind = true; }
+    CHECK(malformed_bind && bindings.size() == 3);
 }

@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace hyprv4 {
 
@@ -122,6 +124,41 @@ private:
         }
         return text;
     }
+};
+
+struct Binding {
+    std::string action;
+    std::vector<std::string> arguments;
+};
+
+class KeyBindings {
+public:
+    void bind(const KeyChord& chord, std::string action, std::vector<std::string> arguments = {}) {
+        if (action.empty()) throw std::invalid_argument("action must not be empty");
+        for (unsigned char byte : action) {
+            if (byte <= 32 || byte == 127) {
+                throw std::invalid_argument("action name must not contain whitespace or controls");
+            }
+        }
+        bindings_.insert_or_assign(chord, Binding{std::move(action), std::move(arguments)});
+    }
+
+    void bind(const std::string& chord, std::string action, std::vector<std::string> arguments = {}) {
+        bind(KeyChord::parse(chord), std::move(action), std::move(arguments));
+    }
+
+    const Binding* lookup(const KeyChord& chord) const {
+        const auto found = bindings_.find(chord);
+        return found == bindings_.end() ? nullptr : &found->second;
+    }
+
+    const Binding* lookup(const std::string& chord) const { return lookup(KeyChord::parse(chord)); }
+
+    std::size_t size() const noexcept { return bindings_.size(); }
+    bool empty() const noexcept { return bindings_.empty(); }
+
+private:
+    std::map<KeyChord, Binding> bindings_;
 };
 
 }  // namespace hyprv4
