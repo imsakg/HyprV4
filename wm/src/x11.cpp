@@ -31,7 +31,7 @@ int main(){
     const auto code=XKeysymToKeycode(display,XStringToKeysym(symbol));if(!code) continue;
     for(unsigned shift:{0u,static_cast<unsigned>(ShiftMask)}) for(unsigned locks:{0u,static_cast<unsigned>(LockMask),static_cast<unsigned>(Mod2Mask),static_cast<unsigned>(LockMask|Mod2Mask)}) XGrabKey(display,code,Mod4Mask|shift|locks,root,True,GrabModeAsync,GrabModeAsync);
   }
-  std::set<int> mapped,hidden;hyprv4::StackingOrder stacking;
+  std::set<int> mapped;hyprv4::VisibilityLedger visibility;hyprv4::StackingOrder stacking;
   bool running=true;
   auto adopt=[&](::Window window){
     const int id=client_id(window);XWindowAttributes attributes{};
@@ -46,10 +46,10 @@ int main(){
       visible.insert(p.id);order.push_back(p.id);const auto frame=hyprv4::content_rect(p.frame,manager.config().border);
       XSetWindowBorderWidth(display,static_cast<::Window>(p.id),static_cast<unsigned>(manager.config().border));
       XMoveResizeWindow(display,static_cast<::Window>(p.id),frame.x,frame.y,static_cast<unsigned>(std::max(1,frame.width)),static_cast<unsigned>(std::max(1,frame.height)));
-      if(!mapped.count(p.id)){XMapWindow(display,static_cast<::Window>(p.id));mapped.insert(p.id);}
+      if(!mapped.count(p.id)){XMapWindow(display,static_cast<::Window>(p.id));mapped.insert(p.id);visibility.show(p.id);}
     }
     if(stacking.update(order)) for(int id:order) XRaiseWindow(display,static_cast<::Window>(id));
-    for(auto it=mapped.begin();it!=mapped.end();){if(!visible.count(*it)){XUnmapWindow(display,static_cast<::Window>(*it));hidden.insert(*it);it=mapped.erase(it);}else ++it;}
+    for(auto it=mapped.begin();it!=mapped.end();){if(!visible.count(*it)){XUnmapWindow(display,static_cast<::Window>(*it));visibility.hide(*it);it=mapped.erase(it);}else ++it;}
     if(manager.focused() && visible.count(*manager.focused())) XSetInputFocus(display,static_cast<::Window>(*manager.focused()),RevertToPointerRoot,CurrentTime);
     XFlush(display);
   };
@@ -62,8 +62,8 @@ int main(){
   while(running){XEvent event{};XNextEvent(display,&event);
     try{
       if(event.type==MapRequest){adopt(event.xmaprequest.window);}
-      else if(event.type==DestroyNotify){const int id=client_id(event.xdestroywindow.window);manager.unmanage(id);mapped.erase(id);hidden.erase(id);}
-      else if(event.type==UnmapNotify){const int id=client_id(event.xunmap.window);if(event.xunmap.event==root){if(!hidden.erase(id)){manager.unmanage(id);mapped.erase(id);}}}
+      else if(event.type==DestroyNotify){const int id=client_id(event.xdestroywindow.window);manager.unmanage(id);mapped.erase(id);visibility.forget(id);}
+      else if(event.type==UnmapNotify){const int id=client_id(event.xunmap.window);if(event.xunmap.event==root){if(!visibility.acknowledge_unmap(id)){manager.unmanage(id);mapped.erase(id);visibility.forget(id);}}}
       else if(event.type==ConfigureRequest){const auto& e=event.xconfigurerequest;const int id=client_id(e.window);const auto* window=manager.find(id);
         if(window){if(window->floating){auto f=window->frame;if(e.value_mask&CWX) f.x=e.x;if(e.value_mask&CWY) f.y=e.y;if(e.value_mask&CWWidth) f.width=e.width;if(e.value_mask&CWHeight) f.height=e.height;manager.configure(id,f);}}
         else{XWindowChanges changes{};changes.x=e.x;changes.y=e.y;changes.width=e.width;changes.height=e.height;changes.border_width=e.border_width;changes.sibling=e.above;changes.stack_mode=e.detail;XConfigureWindow(display,e.window,static_cast<unsigned>(e.value_mask),&changes);}
@@ -90,6 +90,6 @@ int main(){
       apply();
     }catch(const std::exception& error){std::cerr<<error.what()<<'\n';}
   }
-  for(int id:hidden) XMapWindow(display,static_cast<::Window>(id));
+  for(int id:visibility.hidden()) XMapWindow(display,static_cast<::Window>(id));
   XUngrabKey(display,AnyKey,AnyModifier,root);XSetInputFocus(display,PointerRoot,RevertToPointerRoot,CurrentTime);XCloseDisplay(display);return 0;
 }
