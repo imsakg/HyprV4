@@ -16,5 +16,8 @@ int main(){
   auto grid=grid_layout(Rect{0,0,300,200},5,c);CHECK(grid.size()==5);
   CHECK(grid[0].y==0); CHECK(grid[3].y==102); CHECK(grid.back().right()==300);
   CHECK(grid[3].width==148);
+  c.gap=0;c.ratio=0.5;
+  auto bs=bottom_stack(Rect{10,20,400,200},3,c);CHECK(bs[0]==Rect{10,20,400,100});
+  CHECK(bs[1]==Rect{10,120,200,100});CHECK(bs[2].right()==410);
 // NEXT TEST
 }

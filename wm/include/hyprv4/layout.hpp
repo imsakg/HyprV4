@@ -48,5 +48,10 @@ inline std::vector<Rect> grid_layout(Rect area,int count,const Config& c) {
   }
   return result;
 }
+inline std::vector<Rect> bottom_stack(Rect area,int count,const Config& c) {
+  auto result=master_stack({area.y,area.x,area.height,area.width},count,c);
+  for(auto& r:result) r={r.y,r.x,r.height,r.width};
+  return result;
+}
 // LAYOUT API
 } // namespace hyprv4
