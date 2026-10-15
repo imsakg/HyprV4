@@ -94,6 +94,8 @@ public:
   }
   void move_floating(int id,int dx,int dy){configure(id,translate(get(id).frame,dx,dy));}
   void resize_floating(int id,int dw,int dh){auto frame=get(id).frame;frame.width=checked_int(static_cast<std::int64_t>(frame.width)+dw);frame.height=checked_int(static_cast<std::int64_t>(frame.height)+dh);configure(id,frame);}
+  const Config& config() const {return ws().config;}
+  void set_config(const Config& value){value.validate();ws().config=value;}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
