@@ -43,9 +43,9 @@ int main(){
   auto apply=[&](){
     std::set<int> visible;std::vector<int> order;
     for(const auto& p:manager.placements()){
-      visible.insert(p.id);order.push_back(p.id);const auto frame=hyprv4::content_rect(p.frame,manager.config().border);
-      XSetWindowBorderWidth(display,static_cast<::Window>(p.id),static_cast<unsigned>(manager.config().border));
-      XMoveResizeWindow(display,static_cast<::Window>(p.id),frame.x,frame.y,static_cast<unsigned>(std::max(1,frame.width)),static_cast<unsigned>(std::max(1,frame.height)));
+      visible.insert(p.id);order.push_back(p.id);const auto frame=hyprv4::x11_geometry(p.frame,manager.config().border,manager.find(p.id)->fullscreen);
+      XSetWindowBorderWidth(display,static_cast<::Window>(p.id),frame.border);
+      XMoveResizeWindow(display,static_cast<::Window>(p.id),frame.x,frame.y,frame.width,frame.height);
       if(!mapped.count(p.id)){XMapWindow(display,static_cast<::Window>(p.id));mapped.insert(p.id);visibility.show(p.id);}
     }
     if(stacking.update(order)) for(int id:order) XRaiseWindow(display,static_cast<::Window>(id));

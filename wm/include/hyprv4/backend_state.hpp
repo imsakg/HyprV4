@@ -18,5 +18,11 @@ public:
   void forget(int id){hidden_.erase(id);pending_.erase(id);}
   const std::set<int>& hidden() const {return hidden_;}
 };
+struct X11Geometry {int x,y;unsigned width,height,border;};
+inline X11Geometry x11_geometry(Rect frame,int border,bool fullscreen){
+  frame.require_valid();if(border<0) throw std::invalid_argument("negative border");
+  const int b=fullscreen?0:std::min(border,std::min(frame.width,frame.height)/2);
+  return {frame.x,frame.y,static_cast<unsigned>(std::max(1,frame.width-2*b)),static_cast<unsigned>(std::max(1,frame.height-2*b)),static_cast<unsigned>(b)};
+}
 // BACKEND API
 }
