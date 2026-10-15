@@ -79,6 +79,7 @@ public:
   void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
   void minimize(int id,bool enabled){auto& w=get(id);w.minimized=enabled;if(enabled) w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
   void set_urgent(int id,bool urgent){auto& w=get(id);w.urgent=urgent && !(w.workspace==current_ && focused()==id);}
+  void set_title(int id,std::string title){get(id).title=std::move(title);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
