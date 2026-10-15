@@ -7,5 +7,7 @@ int main(){
     wm.manage(11);CHECK(wm.unmanage(11));CHECK(!wm.unmanage(11));CHECK(wm.size()==1);CHECK(!wm.find(11));
   CHECK(wm.focused()==10);CHECK(wm.focus(10));CHECK(!wm.focus(999));CHECK(wm.focused()==10);
   wm.manage(12);wm.manage(13);CHECK(wm.cycle_focus(1)==10);CHECK(wm.cycle_focus(-1)==13);CHECK(wm.cycle_focus(5)==12);
+  auto placements=wm.placements();CHECK(placements.size()==3);CHECK(placements[0].id==10);
+  wm.set_layout(Layout::Monocle);CHECK(wm.placements()[0].frame==wm.placements()[2].frame);
 // NEXT TEST
 }

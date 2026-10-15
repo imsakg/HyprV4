@@ -48,6 +48,14 @@ public:
     const auto next=(index+static_cast<std::int64_t>(direction)%n+n)%n;
     ws().focused=ids[static_cast<std::size_t>(next)];return ws().focused;
   }
+  void set_layout(Layout layout) {(void)arrange(layout,output_,0,ws().config);ws().layout=layout;}
+  Layout layout() const {return ws().layout;}
+  std::vector<Placement> placements() const {
+    auto rects=arrange(ws().layout,output_,static_cast<int>(ws().windows.size()),ws().config);
+    std::vector<Placement> result;std::size_t index=0;
+    for(int id:ws().windows) result.push_back({id,rects[index++]});
+    return result;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
