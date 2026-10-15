@@ -180,4 +180,28 @@ int main() {
     }
     CHECK(callback_error && dispatcher.size() == 1);
     CHECK(dispatcher.lookup("Ctrl+enter")->action == "launch");
+
+    hyprv4::KeyBindings removable;
+    removable.bind("Super+a", "first", {"one"});
+    removable.bind("Super+Shift+a", "second");
+    CHECK(!removable.unbind("a") && removable.size() == 2);
+    CHECK(removable.unbind("Meta+A"));
+    CHECK(removable.lookup("Super+a") == nullptr && removable.size() == 1);
+    CHECK(!removable.unbind("Super+a"));
+    CHECK(!removable.dispatch("Super+a", [](const hyprv4::Binding&) { CHECK(false); }));
+    CHECK(removable.lookup("Super+Shift+a")->action == "second");
+    CHECK(removable.unbind(KeyChord::from_event("a", mods::Super | mods::Shift | mods::NumLock)));
+    CHECK(removable.empty());
+    removable.bind("Ctrl+Enter", "old", {"old argument"});
+    CHECK(removable.dispatch("Control+Return", [&](const hyprv4::Binding& snapshot) {
+        CHECK(removable.unbind("Ctrl+enter"));
+        removable.bind("Ctrl+enter", "new", {"new argument"});
+        CHECK(snapshot.action == "old");
+        CHECK(snapshot.arguments == std::vector<std::string>({"old argument"}));
+    }));
+    CHECK(removable.lookup("Ctrl+enter")->action == "new");
+    bool malformed_unbind = false;
+    try { (void)removable.unbind("Ctrl++a"); }
+    catch (const std::invalid_argument&) { malformed_unbind = true; }
+    CHECK(malformed_unbind && removable.size() == 1);
 }

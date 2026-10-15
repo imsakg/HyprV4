@@ -170,6 +170,9 @@ public:
         return dispatch(KeyChord::parse(chord), std::forward<Handler>(handler));
     }
 
+    bool unbind(const KeyChord& chord) { return bindings_.erase(chord) != 0; }
+    bool unbind(const std::string& chord) { return unbind(KeyChord::parse(chord)); }
+
     std::size_t size() const noexcept { return bindings_.size(); }
     bool empty() const noexcept { return bindings_.empty(); }
 
