@@ -1,6 +1,10 @@
 #pragma once
 
+#include <charconv>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <system_error>
 
 namespace hyprv4 {
 
@@ -15,7 +19,39 @@ struct Config {
     bool focus_follows_mouse = false;
     std::string terminal = "kitty";
 
-    static Config parse(const std::string&) { return {}; }
+    static Config parse(const std::string& text) {
+        Config result;
+        std::istringstream input(text);
+        std::string line;
+        std::size_t number = 0;
+        while (std::getline(input, line)) {
+            ++number;
+            const auto equals = line.find('=');
+            if (equals == std::string::npos) continue;
+            const auto key = line.substr(0, equals);
+            const auto value = line.substr(equals + 1);
+            if (key == "gap") result.gap = integer(value, number);
+            else if (key == "outer_gap") result.outer_gap = integer(value, number);
+            else if (key == "border") result.border = integer(value, number);
+            else if (key == "master_count") result.master_count = integer(value, number);
+            else if (key == "workspace_count") result.workspace_count = integer(value, number);
+        }
+        return result;
+    }
+
+private:
+    [[noreturn]] static void fail(std::size_t line, const std::string& reason) {
+        throw std::invalid_argument("line " + std::to_string(line) + ": " + reason);
+    }
+
+    static int integer(const std::string& value, std::size_t line) {
+        int result = 0;
+        const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result);
+        if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size()) {
+            fail(line, "expected a decimal integer");
+        }
+        return result;
+    }
 };
 
 }  // namespace hyprv4

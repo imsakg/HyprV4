@@ -1,5 +1,18 @@
 #include "hyprv4/config.hpp"
 #include "check.hpp"
+#include <limits>
+#include <stdexcept>
+#include <string>
+
+static bool rejects(const std::string& text, std::size_t line = 1) {
+    try {
+        (void)hyprv4::Config::parse(text);
+    } catch (const std::invalid_argument& error) {
+        return std::string(error.what()).find("line " + std::to_string(line) + ":") !=
+               std::string::npos;
+    }
+    return false;
+}
 
 int main() {
     const hyprv4::Config defaults;
@@ -14,4 +27,18 @@ int main() {
     const auto empty = hyprv4::Config::parse("");
     CHECK(empty.gap == defaults.gap);
     CHECK(empty.terminal == defaults.terminal);
+
+    const auto integers = hyprv4::Config::parse(
+        "gap=13\nouter_gap=21\nborder=4\nmaster_count=3\nworkspace_count=12\n");
+    CHECK(integers.gap == 13);
+    CHECK(integers.outer_gap == 21);
+    CHECK(integers.border == 4);
+    CHECK(integers.master_count == 3);
+    CHECK(integers.workspace_count == 12);
+    CHECK(hyprv4::Config::parse("gap=" + std::to_string(std::numeric_limits<int>::max())).gap ==
+          std::numeric_limits<int>::max());
+    for (const auto* value : {"", "x", "1.0", "2px", "+3", "999999999999999999999", "-999999999999999999999"}) {
+        CHECK(rejects(std::string("gap=") + value));
+    }
+    CHECK(rejects("gap=10\nborder=oops", 2));
 }
