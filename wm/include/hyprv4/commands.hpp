@@ -18,10 +18,22 @@ inline std::vector<std::string> tokenize(const std::string& line){
   if(quote || escaped) throw std::invalid_argument("unfinished quote or escape");
   if(started) result.push_back(token);return result;
 }
+inline std::string json_string(const std::string& input){
+  constexpr char hex[]="0123456789abcdef";std::string out="\"";
+  for(unsigned char c:input){switch(c){case '"':out+="\\\"";break;case '\\':out+="\\\\";break;case '\n':out+="\\n";break;case '\r':out+="\\r";break;case '\t':out+="\\t";break;default:if(c<32){out+="\\u00";out+=hex[c>>4];out+=hex[c&15];}else out+=static_cast<char>(c);}}
+  return out+"\"";
+}
 class CommandRunner {
 public:
   Manager state;KeyBindings keys;
   void reload(const std::string& text){state.set_config(Config::parse(text));}
+  std::string snapshot() const {
+    std::ostringstream out;out<<"{\"workspace\":"<<state.current_workspace()<<",\"focused\":";
+    if(state.focused()) out<<*state.focused();else out<<"null";
+    out<<",\"windows\":[";bool first=true;
+    for(const auto& p:state.placements()){if(!first) out<<',';first=false;out<<"{\"id\":"<<p.id<<",\"title\":"<<json_string(state.find(p.id)->title)<<",\"frame\":["<<p.frame.x<<','<<p.frame.y<<','<<p.frame.width<<','<<p.frame.height<<"]}";}
+    return out.str()+"]}";
+  }
   std::string execute(const std::string& line){return execute_tokens(tokenize(line));}
   std::string execute_tokens(const std::vector<std::string>& args){
     if(args.empty()) return {};
@@ -49,6 +61,7 @@ public:
       catch(...){--dispatch_depth_;throw;}
       --dispatch_depth_;return result;
     }
+    else if(name=="state"){arity(args,1,1);return snapshot();}
     // COMMAND ACTIONS
     else throw std::invalid_argument("unknown command: "+name);
     return "ok";

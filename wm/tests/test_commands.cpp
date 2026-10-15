@@ -14,5 +14,7 @@ int main(){
   bool reload=false;try{runner.reload("gap=99\nratio=nan");}catch(const std::invalid_argument&){reload=true;}CHECK(reload);CHECK(runner.state.config().gap==3);
   runner.execute("bind Super+j cycle 1");CHECK(runner.execute("key Win+J")=="ok");CHECK(runner.execute("key Alt+x")=="unbound");
   runner.execute("bind x key x");bool recursion=false;try{runner.execute("key x");}catch(const std::invalid_argument&){recursion=true;}CHECK(recursion);CHECK(runner.execute("key Alt+x")=="unbound");
+  runner.state.set_title(2,"title\n\"quoted\"");const auto json=runner.execute("state");CHECK(json.find("\"workspace\":2")!=std::string::npos);CHECK(json.find("title\\n\\\"quoted")!=std::string::npos);
+  CHECK(json_string(std::string(1,'\x01'))=="\"\\u0001\"");
 // NEXT TEST
 }
