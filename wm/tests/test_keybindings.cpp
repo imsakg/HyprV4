@@ -71,4 +71,29 @@ int main() {
     for (const auto* text : {"0", "XF86AudioMute", "KP_Enter", "plus", "-", "=", ",", ".", "[", "]", "\\", ";", "'", "!"}) {
         CHECK(KeyChord::parse(KeyChord::parse(text).to_string()) == KeyChord::parse(text));
     }
+
+    namespace mods = hyprv4::modifiers;
+    CHECK(KeyChord::from_event("Return", mods::Super | mods::CapsLock | mods::NumLock) ==
+          KeyChord::parse("Super+enter"));
+    for (hyprv4::ModifierMask mask = 0; mask < 128; ++mask) {
+        const auto event = KeyChord::from_event("A", mask);
+        CHECK(event.modifiers() == (mask & mods::Active));
+        CHECK(event.key() == "a");
+        CHECK(event == KeyChord::from_event("a", mask & mods::Active));
+        CHECK(KeyChord::parse(event.to_string()) == event);
+    }
+    CHECK(KeyChord::from_event("A") == KeyChord::parse("a"));
+    CHECK(!(KeyChord::from_event("A") == KeyChord::parse("Shift+a")));
+    CHECK(KeyChord::from_event("+", mods::Shift) == KeyChord::parse("Shift+plus"));
+    CHECK(KeyChord::from_event(" ", mods::Ctrl) == KeyChord::parse("Ctrl+space"));
+    bool unknown_event_mask = false;
+    try { (void)KeyChord::from_event("a", hyprv4::ModifierMask{1} << 31); }
+    catch (const std::invalid_argument&) { unknown_event_mask = true; }
+    CHECK(unknown_event_mask);
+    for (const auto* key : {"", "Ctrl+a", "Ctrl", "two words", "a\nb"}) {
+        bool invalid_event = false;
+        try { (void)KeyChord::from_event(key, mods::ScrollLock); }
+        catch (const std::invalid_argument&) { invalid_event = true; }
+        CHECK(invalid_event);
+    }
 }

@@ -13,6 +13,11 @@ inline constexpr ModifierMask Ctrl = 1u << 0;
 inline constexpr ModifierMask Alt = 1u << 1;
 inline constexpr ModifierMask Super = 1u << 2;
 inline constexpr ModifierMask Shift = 1u << 3;
+inline constexpr ModifierMask CapsLock = 1u << 4;
+inline constexpr ModifierMask NumLock = 1u << 5;
+inline constexpr ModifierMask ScrollLock = 1u << 6;
+inline constexpr ModifierMask Active = Ctrl | Alt | Super | Shift;
+inline constexpr ModifierMask Locks = CapsLock | NumLock | ScrollLock;
 }  // namespace modifiers
 
 // Symbolic policy keys, not backend keycodes or a keyboard-layout implementation.
@@ -32,7 +37,17 @@ public:
         return KeyChord(mask, canonical_key(text.substr(start)));
     }
 
+    // Callers translate backend modifier bits into this library's mask first.
+    static KeyChord from_event(const std::string& key, ModifierMask mask = 0) {
+        if (mask & ~(modifiers::Active | modifiers::Locks)) {
+            throw std::invalid_argument("event contains unknown modifier bits");
+        }
+        const auto symbol = key == "+" ? "plus" : key == " " ? "space" : key;
+        return KeyChord(mask & modifiers::Active, canonical_key(symbol));
+    }
+
     const std::string& key() const noexcept { return key_; }
+    ModifierMask modifiers() const noexcept { return modifiers_; }
     std::string to_string() const {
         std::string result;
         if (modifiers_ & modifiers::Ctrl) result += "Ctrl+";
