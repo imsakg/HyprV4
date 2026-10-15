@@ -15,6 +15,7 @@ struct Workspace {
   int id=1;std::vector<int> windows;std::optional<int> focused;
   Layout layout=Layout::MasterStack;Config config;
 };
+struct Rule {std::string app_id;std::optional<bool> floating;std::optional<int> workspace;};
 struct Placement { int id;Rect frame; };
 class Manager {
 public:
@@ -23,7 +24,7 @@ public:
     if(id<=0 || clients_.count(id)) throw std::invalid_argument("invalid or duplicate client id");
     if(ws().windows.size()>=100000) throw std::invalid_argument("workspace client limit");
     Window w;w.id=id;w.workspace=current_;w.title=std::move(title);w.app_id=std::move(app_id);
-    clients_.emplace(id,std::move(w));ws().windows.push_back(id);ws().focused=id;
+    clients_.emplace(id,std::move(w));ws().windows.push_back(id);ws().focused=id;apply_rules(id);
   }
   const Window* find(int id) const { auto i=clients_.find(id);return i==clients_.end()?nullptr:&i->second; }
   std::size_t size() const {return clients_.size();}
@@ -100,15 +101,17 @@ public:
   void set_output(Rect area){area.require_valid();if(area.width==0 || area.height==0) throw std::invalid_argument("empty output");output_=area;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,work_area());}
   Rect work_area() const {return reserve(output_,margins_);}
   void set_reserved(Insets margins){(void)reserve(output_,margins);margins_=margins;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,work_area());}
+  void add_rule(Rule rule){if(rule.app_id.empty() || (rule.workspace && !workspaces_.count(*rule.workspace))) throw std::invalid_argument("invalid rule");rules_.push_back(std::move(rule));}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
-  Rect output_{0,0,1920,1080};Insets margins_;
+  Rect output_{0,0,1920,1080};Insets margins_;std::vector<Rule> rules_;
   Workspace& ws(){return workspaces_.at(current_);}
   const Workspace& ws() const {return workspaces_.at(current_);}
   Window& get(int id){auto it=clients_.find(id);if(it==clients_.end()) throw std::invalid_argument("unknown client");return it->second;}
   std::vector<int> focus_candidates(const Workspace& space) const {std::vector<int> ids;for(int id:space.windows){const auto& w=clients_.at(id);if(!w.minimized && !w.scratch) ids.push_back(id);}return ids;}
   void repair_focus(Workspace& space){const auto ids=focus_candidates(space);if(!space.focused || std::find(ids.begin(),ids.end(),*space.focused)==ids.end()) space.focused=ids.empty()?std::nullopt:std::optional<int>(ids.back());}
+  void apply_rules(int id){for(const auto& rule:rules_){auto& w=get(id);if(w.app_id!=rule.app_id) continue;if(rule.floating){w.floating=*rule.floating;w.frame=clamp_to(w.frame,work_area());}if(rule.workspace) move_to_workspace(id,*rule.workspace);}}
   // MANAGER PRIVATE
 };
 } // namespace hyprv4

@@ -34,5 +34,6 @@ int main(){
   wm.set_output(Rect{-800,0,800,600});CHECK(wm.output()==Rect{-800,0,800,600});CHECK(wm.find(12)->frame.right()<=0);CHECK(wm.placements()[0].frame.x==-800);
   wm.set_reserved(Insets{0,0,30,20});CHECK(wm.work_area()==Rect{-800,30,800,550});CHECK(wm.placements()[0].frame.y==30);
   wm.set_fullscreen(10,true);CHECK(wm.placements()[0].frame==wm.output());wm.set_fullscreen(10,false);
+  wm.add_rule(Rule{"dialog",true,2});wm.manage(30,"Save file","dialog");CHECK(wm.find(30)->workspace==2);CHECK(wm.find(30)->floating);CHECK(wm.current_workspace()==1);
 // NEXT TEST
 }
