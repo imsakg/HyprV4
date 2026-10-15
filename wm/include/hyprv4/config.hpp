@@ -38,11 +38,18 @@ struct Config {
             else if (key == "master_count") result.master_count = integer(value, number, 1);
             else if (key == "workspace_count") result.workspace_count = integer(value, number, 1);
             else if (key == "ratio") result.ratio = fraction(value, number);
+            else if (key == "focus_follows_mouse") result.focus_follows_mouse = boolean(value, number);
         }
         return result;
     }
 
 private:
+    static bool boolean(const std::string& value, std::size_t line) {
+        if (value == "true") return true;
+        if (value == "false") return false;
+        fail(line, "expected true or false");
+    }
+
     static double fraction(const std::string& value, std::size_t line) {
         std::istringstream input(value);
         input.imbue(std::locale::classic());

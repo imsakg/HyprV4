@@ -60,4 +60,11 @@ int main() {
         CHECK(rejects(std::string("ratio=") + value));
     }
     CHECK(rejects("gap=0\nratio=1", 2));
+
+    CHECK(hyprv4::Config::parse("focus_follows_mouse=true").focus_follows_mouse);
+    CHECK(!hyprv4::Config::parse("focus_follows_mouse=false").focus_follows_mouse);
+    for (const auto* value : {"", "True", "FALSE", "1", "0", "yes", "truefalse"}) {
+        CHECK(rejects(std::string("focus_follows_mouse=") + value));
+    }
+    CHECK(rejects("gap=0\nfocus_follows_mouse=yes", 2));
 }
