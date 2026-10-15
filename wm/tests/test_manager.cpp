@@ -19,5 +19,7 @@ int main(){
   bool tiled_configure=false;try{wm.configure(10,Rect{0,0,1,1});}catch(const std::invalid_argument&){tiled_configure=true;}CHECK(tiled_configure);
   wm.set_fullscreen(10,true);CHECK(wm.placements().size()==1);CHECK(wm.placements()[0].frame==Rect{0,0,1920,1080});
   wm.set_fullscreen(12,true);CHECK(!wm.find(10)->fullscreen);CHECK(wm.placements()[0].id==12);wm.set_fullscreen(12,false);
+  wm.minimize(12,true);CHECK(wm.find(12)->minimized);CHECK(wm.placements().size()==1);CHECK(wm.focused()==10);CHECK(!wm.focus(12));CHECK(wm.cycle_focus(1)==10);
+  wm.minimize(10,true);CHECK(!wm.focused());CHECK(wm.placements().empty());wm.minimize(10,false);wm.minimize(12,false);
 // NEXT TEST
 }

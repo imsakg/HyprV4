@@ -32,16 +32,16 @@ public:
     auto found=clients_.find(id);if(found==clients_.end()) return false;
     auto& space=workspaces_.at(found->second.workspace);
     space.windows.erase(std::remove(space.windows.begin(),space.windows.end(),id),space.windows.end());
-    if(space.focused==id) space.focused=space.windows.empty()?std::nullopt:std::optional<int>(space.windows.back());
+    repair_focus(space);
     clients_.erase(found);return true;
   }
   std::optional<int> focused() const {return ws().focused;}
   bool focus(int id) {
-    auto found=clients_.find(id);if(found==clients_.end() || found->second.workspace!=current_) return false;
+    auto found=clients_.find(id);if(found==clients_.end() || found->second.workspace!=current_ || found->second.minimized || found->second.scratch) return false;
     ws().focused=id;return true;
   }
   std::optional<int> cycle_focus(int direction) {
-    const auto& ids=ws().windows;if(ids.empty()) return std::nullopt;
+    const auto ids=focus_candidates(ws());if(ids.empty()){ws().focused.reset();return std::nullopt;}
     const auto it=std::find(ids.begin(),ids.end(),ws().focused.value_or(-1));
     const auto n=static_cast<std::int64_t>(ids.size());
     const auto index=it==ids.end()?0:it-ids.begin();
@@ -51,11 +51,11 @@ public:
   void set_layout(Layout layout) {(void)arrange(layout,output_,0,ws().config);ws().layout=layout;}
   Layout layout() const {return ws().layout;}
   std::vector<Placement> placements() const {
-    for(int id:ws().windows) if(clients_.at(id).fullscreen) return {{id,output_}};
-    int tiled=0;for(int id:ws().windows) if(!clients_.at(id).floating) ++tiled;
+    for(int id:ws().windows) if(!clients_.at(id).minimized && !clients_.at(id).scratch && clients_.at(id).fullscreen) return {{id,output_}};
+    int tiled=0;for(int id:ws().windows) if(!clients_.at(id).minimized && !clients_.at(id).scratch && !clients_.at(id).floating) ++tiled;
     auto rects=arrange(ws().layout,output_,tiled,ws().config);
     std::vector<Placement> result;std::size_t index=0;
-    for(int id:ws().windows) {const auto& w=clients_.at(id);result.push_back({id,w.floating?w.frame:rects[index++]});}
+    for(int id:ws().windows) {const auto& w=clients_.at(id);if(w.minimized || w.scratch) continue;result.push_back({id,w.floating?w.frame:rects[index++]});}
     return result;
   }
   void add_workspace(int id) {
@@ -71,12 +71,13 @@ public:
     auto& source=workspaces_.at(window.workspace);auto& destination=workspaces_.at(target);
     if(destination.windows.size()>=100000) throw std::invalid_argument("workspace client limit");
     source.windows.erase(std::remove(source.windows.begin(),source.windows.end(),id),source.windows.end());
-    if(source.focused==id) source.focused=source.windows.empty()?std::nullopt:std::optional<int>(source.windows.back());
+    repair_focus(source);
     destination.windows.push_back(id);if(!destination.focused) destination.focused=id;window.workspace=target;
   }
   void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,output_);}
   void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,output_);}
   void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
+  void minimize(int id,bool enabled){auto& w=get(id);w.minimized=enabled;if(enabled) w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
@@ -84,6 +85,8 @@ private:
   Workspace& ws(){return workspaces_.at(current_);}
   const Workspace& ws() const {return workspaces_.at(current_);}
   Window& get(int id){auto it=clients_.find(id);if(it==clients_.end()) throw std::invalid_argument("unknown client");return it->second;}
+  std::vector<int> focus_candidates(const Workspace& space) const {std::vector<int> ids;for(int id:space.windows){const auto& w=clients_.at(id);if(!w.minimized && !w.scratch) ids.push_back(id);}return ids;}
+  void repair_focus(Workspace& space){const auto ids=focus_candidates(space);if(!space.focused || std::find(ids.begin(),ids.end(),*space.focused)==ids.end()) space.focused=ids.empty()?std::nullopt:std::optional<int>(ids.back());}
   // MANAGER PRIVATE
 };
 } // namespace hyprv4
