@@ -31,3 +31,11 @@ noto-fonts-emoji lxappearance xfce4-settings sddm-git sddm-sugar-candy-git
 ```
 
 Or you can use the attached script "set-hypr" to install everything for you.
+
+## Portable C++ window-management engine
+
+The independent `wm/` addition provides tiling, workspace/window lifecycle, strict configuration, keybindings, a scriptable headless executable, tests, and an optional experimental Xlib backend. It is not a Wayland compositor or a replacement for the Hyprland setup above.
+
+- [Architecture, build, commands and X11 limitations](docs/wm-core.md)
+- [Configuration](docs/wm-configuration.md) · [Keybindings](docs/wm-keybindings.md)
+- [Retrospective history provenance](docs/history-provenance.md)
