@@ -38,7 +38,7 @@ public:
   std::optional<int> focused() const {return ws().focused;}
   bool focus(int id) {
     auto found=clients_.find(id);if(found==clients_.end() || found->second.workspace!=current_ || found->second.minimized || found->second.scratch) return false;
-    ws().focused=id;return true;
+    ws().focused=id;found->second.urgent=false;return true;
   }
   std::optional<int> cycle_focus(int direction) {
     const auto ids=focus_candidates(ws());if(ids.empty()){ws().focused.reset();return std::nullopt;}
@@ -46,7 +46,7 @@ public:
     const auto n=static_cast<std::int64_t>(ids.size());
     const auto index=it==ids.end()?0:it-ids.begin();
     const auto next=(index+static_cast<std::int64_t>(direction)%n+n)%n;
-    ws().focused=ids[static_cast<std::size_t>(next)];return ws().focused;
+    focus(ids[static_cast<std::size_t>(next)]);return ws().focused;
   }
   void set_layout(Layout layout) {(void)arrange(layout,output_,0,ws().config);ws().layout=layout;}
   Layout layout() const {return ws().layout;}
@@ -78,6 +78,7 @@ public:
   void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,output_);}
   void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
   void minimize(int id,bool enabled){auto& w=get(id);w.minimized=enabled;if(enabled) w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
+  void set_urgent(int id,bool urgent){auto& w=get(id);w.urgent=urgent && !(w.workspace==current_ && focused()==id);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;

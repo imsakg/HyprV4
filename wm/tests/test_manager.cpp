@@ -21,5 +21,7 @@ int main(){
   wm.set_fullscreen(12,true);CHECK(!wm.find(10)->fullscreen);CHECK(wm.placements()[0].id==12);wm.set_fullscreen(12,false);
   wm.minimize(12,true);CHECK(wm.find(12)->minimized);CHECK(wm.placements().size()==1);CHECK(wm.focused()==10);CHECK(!wm.focus(12));CHECK(wm.cycle_focus(1)==10);
   wm.minimize(10,true);CHECK(!wm.focused());CHECK(wm.placements().empty());wm.minimize(10,false);wm.minimize(12,false);
+  wm.set_urgent(12,true);CHECK(wm.find(12)->urgent);CHECK(wm.focus(12));CHECK(!wm.find(12)->urgent);
+  wm.set_urgent(12,true);CHECK(!wm.find(12)->urgent);wm.focus(10);
 // NEXT TEST
 }
