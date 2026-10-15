@@ -35,5 +35,18 @@ inline std::vector<Rect> monocle(Rect area,int count,const Config& c) {
   c.validate(); if(count<0 || count>100000) throw std::invalid_argument("invalid window count");
   return std::vector<Rect>(static_cast<std::size_t>(count),inset(area,c.outer_gap));
 }
+inline std::vector<Rect> grid_layout(Rect area,int count,const Config& c) {
+  c.validate(); if(count<0 || count>100000) throw std::invalid_argument("invalid window count");
+  if(count==0) return {};
+  area=inset(area,c.outer_gap); int columns=1;
+  while(columns*columns<count) ++columns;
+  const int rows=(count+columns-1)/columns;
+  auto bands=split(area,rows,c.gap);std::vector<Rect> result;
+  for(const auto& band:bands){
+    const int n=std::min(columns,count-static_cast<int>(result.size()));
+    auto row=split(band,n,c.gap,true);result.insert(result.end(),row.begin(),row.end());
+  }
+  return result;
+}
 // LAYOUT API
 } // namespace hyprv4

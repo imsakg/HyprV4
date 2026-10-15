@@ -12,5 +12,9 @@ int main(){
   CHECK(master_stack(Rect{0,0,100,80},1,c)[0]==Rect{7,7,86,66});
   auto mono=monocle(Rect{0,0,100,80},3,c);CHECK(mono.size()==3);
   CHECK(mono[0]==Rect{7,7,86,66});CHECK(mono[2]==mono[0]);
+  c.outer_gap=0;c.gap=4;
+  auto grid=grid_layout(Rect{0,0,300,200},5,c);CHECK(grid.size()==5);
+  CHECK(grid[0].y==0); CHECK(grid[3].y==102); CHECK(grid.back().right()==300);
+  CHECK(grid[3].width==148);
 // NEXT TEST
 }
