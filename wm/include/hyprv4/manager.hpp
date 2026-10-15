@@ -96,6 +96,8 @@ public:
   void resize_floating(int id,int dw,int dh){auto frame=get(id).frame;frame.width=checked_int(static_cast<std::int64_t>(frame.width)+dw);frame.height=checked_int(static_cast<std::int64_t>(frame.height)+dh);configure(id,frame);}
   const Config& config() const {return ws().config;}
   void set_config(const Config& value){value.validate();ws().config=value;}
+  Rect output() const {return output_;}
+  void set_output(Rect area){area.require_valid();if(area.width==0 || area.height==0) throw std::invalid_argument("empty output");output_=area;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,output_);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;

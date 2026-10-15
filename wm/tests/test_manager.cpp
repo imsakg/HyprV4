@@ -31,5 +31,6 @@ int main(){
   bool negative_resize=false;try{wm.resize_floating(12,-500,0);}catch(const std::invalid_argument&){negative_resize=true;}CHECK(negative_resize);CHECK(wm.find(12)->frame.width==420);
   Config changed;changed.gap=0;changed.outer_gap=0;changed.ratio=0.7;wm.set_config(changed);CHECK(wm.config().ratio==0.7);
   changed.ratio=2.0;bool config_error=false;try{wm.set_config(changed);}catch(const std::invalid_argument&){config_error=true;}CHECK(config_error);CHECK(wm.config().ratio==0.7);
+  wm.set_output(Rect{-800,0,800,600});CHECK(wm.output()==Rect{-800,0,800,600});CHECK(wm.find(12)->frame.right()<=0);CHECK(wm.placements()[0].frame.x==-800);
 // NEXT TEST
 }
