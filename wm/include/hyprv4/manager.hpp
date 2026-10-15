@@ -92,6 +92,7 @@ public:
     auto& ids=ws().windows;const auto it=std::find(ids.begin(),ids.end(),*focused());
     const int id=*it;ids.erase(it);ids.insert(ids.begin(),id);return true;
   }
+  void move_floating(int id,int dx,int dy){configure(id,translate(get(id).frame,dx,dy));}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
