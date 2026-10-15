@@ -38,5 +38,6 @@ int main(){
   auto pointer_config=wm.config();pointer_config.focus_follows_mouse=true;wm.set_config(pointer_config);
   CHECK(wm.pointer_enter(-790,40)==10);CHECK(!wm.pointer_enter(9999,9999));
   wm.stash(12);CHECK(wm.find(12)->scratch);CHECK(wm.placements().size()==1);wm.restore(12);CHECK(!wm.find(12)->scratch);CHECK(wm.focused()==12);CHECK(wm.find(12)->floating);
+  wm.remove_workspace(2,1);CHECK(wm.find(20)->workspace==1);CHECK(wm.find(30)->workspace==1);CHECK(wm.placements().size()==5);
 // NEXT TEST
 }

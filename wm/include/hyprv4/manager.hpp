@@ -109,6 +109,15 @@ public:
   }
   void stash(int id){auto& w=get(id);w.scratch=true;w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
   void restore(int id){get(id);move_to_workspace(id,current_);auto& w=get(id);w.scratch=false;w.minimized=false;w.floating=true;w.frame=clamp_to(w.frame,work_area());focus(id);}
+  void remove_workspace(int id,int target){
+    if(id==target || !workspaces_.count(id) || !workspaces_.count(target)) throw std::invalid_argument("invalid workspace migration");
+    const auto ids=workspaces_.at(id).windows;
+    if(ids.size()+workspaces_.at(target).windows.size()>100000) throw std::invalid_argument("workspace client limit");
+    for(int client:ids) move_to_workspace(client,target);
+    if(current_==id) current_=target;
+    for(auto& rule:rules_) if(rule.workspace==id) rule.workspace=target;
+    workspaces_.erase(id);
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
