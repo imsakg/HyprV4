@@ -27,5 +27,7 @@ int main(){
   wm.toggle_floating(12);wm.focus(10);CHECK(wm.swap_focused(1));CHECK(wm.placements()[0].id==12);CHECK(wm.focused()==10);
   CHECK(wm.promote_master());CHECK(wm.placements()[0].id==10);CHECK(wm.focused()==10);
   wm.toggle_floating(12);wm.configure(12,Rect{100,100,400,300});wm.move_floating(12,20,-30);CHECK(wm.find(12)->frame==Rect{120,70,400,300});
+  wm.resize_floating(12,20,30);CHECK(wm.find(12)->frame==Rect{120,70,420,330});
+  bool negative_resize=false;try{wm.resize_floating(12,-500,0);}catch(const std::invalid_argument&){negative_resize=true;}CHECK(negative_resize);CHECK(wm.find(12)->frame.width==420);
 // NEXT TEST
 }

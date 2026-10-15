@@ -93,6 +93,7 @@ public:
     const int id=*it;ids.erase(it);ids.insert(ids.begin(),id);return true;
   }
   void move_floating(int id,int dx,int dy){configure(id,translate(get(id).frame,dx,dy));}
+  void resize_floating(int id,int dw,int dh){auto frame=get(id).frame;frame.width=checked_int(static_cast<std::int64_t>(frame.width)+dw);frame.height=checked_int(static_cast<std::int64_t>(frame.height)+dh);configure(id,frame);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
