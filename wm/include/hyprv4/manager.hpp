@@ -51,6 +51,7 @@ public:
   void set_layout(Layout layout) {(void)arrange(layout,output_,0,ws().config);ws().layout=layout;}
   Layout layout() const {return ws().layout;}
   std::vector<Placement> placements() const {
+    for(int id:ws().windows) if(clients_.at(id).fullscreen) return {{id,output_}};
     int tiled=0;for(int id:ws().windows) if(!clients_.at(id).floating) ++tiled;
     auto rects=arrange(ws().layout,output_,tiled,ws().config);
     std::vector<Placement> result;std::size_t index=0;
@@ -75,6 +76,7 @@ public:
   }
   void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,output_);}
   void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,output_);}
+  void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;

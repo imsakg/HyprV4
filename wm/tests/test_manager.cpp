@@ -17,5 +17,7 @@ int main(){
   CHECK(wm.placements()[1].frame==Rect{100,100,640,480});
   wm.configure(12,Rect{-100,1000,800,200});CHECK(wm.find(12)->frame==Rect{0,880,800,200});
   bool tiled_configure=false;try{wm.configure(10,Rect{0,0,1,1});}catch(const std::invalid_argument&){tiled_configure=true;}CHECK(tiled_configure);
+  wm.set_fullscreen(10,true);CHECK(wm.placements().size()==1);CHECK(wm.placements()[0].frame==Rect{0,0,1920,1080});
+  wm.set_fullscreen(12,true);CHECK(!wm.find(10)->fullscreen);CHECK(wm.placements()[0].id==12);wm.set_fullscreen(12,false);
 // NEXT TEST
 }
