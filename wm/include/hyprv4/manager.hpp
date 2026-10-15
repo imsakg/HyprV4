@@ -56,6 +56,13 @@ public:
     for(int id:ws().windows) result.push_back({id,rects[index++]});
     return result;
   }
+  void add_workspace(int id) {
+    if(id<=0 || workspaces_.count(id)) throw std::invalid_argument("invalid or duplicate workspace");
+    Workspace space;space.id=id;space.config=ws().config;workspaces_.emplace(id,std::move(space));
+  }
+  void switch_workspace(int id) {
+    if(!workspaces_.count(id)) throw std::invalid_argument("unknown workspace");current_=id;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
