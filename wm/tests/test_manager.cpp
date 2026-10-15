@@ -40,5 +40,8 @@ int main(){
   wm.stash(12);CHECK(wm.find(12)->scratch);CHECK(wm.placements().size()==1);wm.restore(12);CHECK(!wm.find(12)->scratch);CHECK(wm.focused()==12);CHECK(wm.find(12)->floating);
   wm.remove_workspace(2,1);CHECK(wm.find(20)->workspace==1);CHECK(wm.find(30)->workspace==1);CHECK(wm.placements().size()==5);
   wm.request_close(10);CHECK(wm.find(10));CHECK(wm.close_requests()==std::vector<int>{10});CHECK(wm.find(10)->close_requested);wm.request_close(10);CHECK(wm.close_requests().size()==1);
+  wm.add_workspace(3);wm.switch_workspace(3);wm.manage(40);wm.set_fullscreen(40,true);wm.switch_workspace(1);wm.set_fullscreen(10,true);wm.move_to_workspace(10,3);
+  CHECK(!wm.find(40)->fullscreen);wm.switch_workspace(3);CHECK(wm.focused()==10);CHECK(!wm.focus(40));CHECK(wm.cycle_focus(1)==10);CHECK(wm.valid_state());
+  wm.minimize(10,true);wm.set_fullscreen(10,true);CHECK(!wm.find(10)->minimized);CHECK(wm.valid_state());wm.set_fullscreen(10,false);wm.switch_workspace(1);
 // NEXT TEST
 }

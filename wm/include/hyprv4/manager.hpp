@@ -2,6 +2,7 @@
 #include "layout.hpp"
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 namespace hyprv4 {
@@ -24,7 +25,7 @@ public:
     if(id<=0 || clients_.count(id)) throw std::invalid_argument("invalid or duplicate client id");
     if(ws().windows.size()>=100000) throw std::invalid_argument("workspace client limit");
     Window w;w.id=id;w.workspace=current_;w.title=std::move(title);w.app_id=std::move(app_id);
-    clients_.emplace(id,std::move(w));ws().windows.push_back(id);ws().focused=id;apply_rules(id);
+    clients_.emplace(id,std::move(w));ws().windows.push_back(id);ws().focused=id;apply_rules(id);repair_focus(ws());
   }
   const Window* find(int id) const { auto i=clients_.find(id);return i==clients_.end()?nullptr:&i->second; }
   std::size_t size() const {return clients_.size();}
@@ -39,6 +40,7 @@ public:
   std::optional<int> focused() const {return ws().focused;}
   bool focus(int id) {
     auto found=clients_.find(id);if(found==clients_.end() || found->second.workspace!=current_ || found->second.minimized || found->second.scratch) return false;
+    const auto candidates=focus_candidates(ws());if(std::find(candidates.begin(),candidates.end(),id)==candidates.end()) return false;
     ws().focused=id;found->second.urgent=false;return true;
   }
   std::optional<int> cycle_focus(int direction) {
@@ -73,11 +75,13 @@ public:
     if(destination.windows.size()>=100000) throw std::invalid_argument("workspace client limit");
     source.windows.erase(std::remove(source.windows.begin(),source.windows.end(),id),source.windows.end());
     repair_focus(source);
-    destination.windows.push_back(id);if(!destination.focused) destination.focused=id;window.workspace=target;
+    destination.windows.push_back(id);window.workspace=target;
+    if(window.fullscreen){for(int peer:destination.windows) if(peer!=id) get(peer).fullscreen=false;destination.focused=id;}
+    repair_focus(destination);
   }
   void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,work_area());}
   void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,work_area());}
-  void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
+  void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){w.minimized=false;w.scratch=false;for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
   void minimize(int id,bool enabled){auto& w=get(id);w.minimized=enabled;if(enabled) w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
   void set_urgent(int id,bool urgent){auto& w=get(id);w.urgent=urgent && !(w.workspace==current_ && focused()==id);}
   void set_title(int id,std::string title){get(id).title=std::move(title);}
@@ -120,6 +124,19 @@ public:
   }
   void request_close(int id){get(id).close_requested=true;}
   std::vector<int> close_requests() const {std::vector<int> ids;for(const auto& item:clients_) if(item.second.close_requested) ids.push_back(item.first);return ids;}
+  std::vector<int> workspace_ids() const {std::vector<int> ids;for(const auto& item:workspaces_) ids.push_back(item.first);return ids;}
+  bool valid_state() const {
+    if(!workspaces_.count(current_) || !output_.valid()) return false;
+    std::set<int> seen;
+    for(const auto& item:workspaces_){const auto& space=item.second;int full=0;
+      for(int id:space.windows){const auto* w=find(id);if(!w || w->workspace!=item.first || w->id!=id || !seen.insert(id).second || !w->frame.valid()) return false;if(w->fullscreen) ++full;}
+      if(full>1) return false;
+      const auto candidates=focus_candidates(space);
+      if(space.focused && std::find(candidates.begin(),candidates.end(),*space.focused)==candidates.end()) return false;
+      if(!space.focused && !candidates.empty()) return false;
+    }
+    return seen.size()==clients_.size();
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
@@ -127,7 +144,7 @@ private:
   Workspace& ws(){return workspaces_.at(current_);}
   const Workspace& ws() const {return workspaces_.at(current_);}
   Window& get(int id){auto it=clients_.find(id);if(it==clients_.end()) throw std::invalid_argument("unknown client");return it->second;}
-  std::vector<int> focus_candidates(const Workspace& space) const {std::vector<int> ids;for(int id:space.windows){const auto& w=clients_.at(id);if(!w.minimized && !w.scratch) ids.push_back(id);}return ids;}
+  std::vector<int> focus_candidates(const Workspace& space) const {std::vector<int> ids;for(int id:space.windows){const auto& w=clients_.at(id);if(!w.minimized && !w.scratch){if(w.fullscreen) return {id};ids.push_back(id);}}return ids;}
   void repair_focus(Workspace& space){const auto ids=focus_candidates(space);if(!space.focused || std::find(ids.begin(),ids.end(),*space.focused)==ids.end()) space.focused=ids.empty()?std::nullopt:std::optional<int>(ids.back());}
   void apply_rules(int id){for(const auto& rule:rules_){auto& w=get(id);if(w.app_id!=rule.app_id) continue;if(rule.floating){w.floating=*rule.floating;w.frame=clamp_to(w.frame,work_area());}if(rule.workspace) move_to_workspace(id,*rule.workspace);}}
   // MANAGER PRIVATE
