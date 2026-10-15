@@ -15,5 +15,7 @@ int main(){
   wm.switch_workspace(2);CHECK(wm.focused()==20);CHECK(wm.placements().size()==2);wm.switch_workspace(1);
   wm.toggle_floating(12);CHECK(wm.find(12)->floating);CHECK(wm.placements().size()==2);
   CHECK(wm.placements()[1].frame==Rect{100,100,640,480});
+  wm.configure(12,Rect{-100,1000,800,200});CHECK(wm.find(12)->frame==Rect{0,880,800,200});
+  bool tiled_configure=false;try{wm.configure(10,Rect{0,0,1,1});}catch(const std::invalid_argument&){tiled_configure=true;}CHECK(tiled_configure);
 // NEXT TEST
 }

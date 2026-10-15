@@ -74,6 +74,7 @@ public:
     destination.windows.push_back(id);if(!destination.focused) destination.focused=id;window.workspace=target;
   }
   void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,output_);}
+  void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,output_);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
