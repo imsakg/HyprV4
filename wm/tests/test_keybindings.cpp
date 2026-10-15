@@ -2,6 +2,7 @@
 #include "check.hpp"
 #include <algorithm>
 #include <array>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -149,4 +150,34 @@ int main() {
     bindings.bind("Super+Shift+Return", "alternate");
     CHECK(bindings.size() == 4);
     CHECK(bindings.lookup("Super+Shift+enter")->action == "alternate");
+
+    hyprv4::KeyBindings dispatcher;
+    dispatcher.bind("Ctrl+Return", "launch", {"foot", "--title=dev desk"});
+    int calls = 0;
+    const auto& read_only = dispatcher;
+    auto handler = [&](const hyprv4::Binding& binding) {
+        ++calls;
+        CHECK(binding.action == "launch");
+        CHECK(binding.arguments == std::vector<std::string>({"foot", "--title=dev desk"}));
+    };
+    CHECK(read_only.dispatch(KeyChord::from_event("Enter", mods::Ctrl | mods::Locks), handler));
+    CHECK(calls == 1);
+    CHECK(read_only.dispatch("Control+Return", handler));
+    CHECK(calls == 2);
+    CHECK(!read_only.dispatch("Return", handler));
+    CHECK(!read_only.dispatch("Ctrl+Shift+Return", handler));
+    CHECK(calls == 2);
+    CHECK(read_only.dispatch("Ctrl+enter", [state = std::make_unique<int>(7)](const hyprv4::Binding&) {
+        CHECK(*state == 7);
+    }));
+    bool callback_error = false;
+    try {
+        read_only.dispatch("Ctrl+enter", [](const hyprv4::Binding&) {
+            throw std::runtime_error("handler error");
+        });
+    } catch (const std::runtime_error& error) {
+        callback_error = std::string(error.what()) == "handler error";
+    }
+    CHECK(callback_error && dispatcher.size() == 1);
+    CHECK(dispatcher.lookup("Ctrl+enter")->action == "launch");
 }

@@ -155,6 +155,21 @@ public:
 
     const Binding* lookup(const std::string& chord) const { return lookup(KeyChord::parse(chord)); }
 
+    // Dispatch a snapshot so a callback may safely change the owning table.
+    template <typename Handler>
+    bool dispatch(const KeyChord& chord, Handler&& handler) const {
+        const auto* found = lookup(chord);
+        if (!found) return false;
+        const Binding snapshot = *found;
+        std::forward<Handler>(handler)(snapshot);
+        return true;
+    }
+
+    template <typename Handler>
+    bool dispatch(const std::string& chord, Handler&& handler) const {
+        return dispatch(KeyChord::parse(chord), std::forward<Handler>(handler));
+    }
+
     std::size_t size() const noexcept { return bindings_.size(); }
     bool empty() const noexcept { return bindings_.empty(); }
 
