@@ -22,5 +22,12 @@ inline Rect inset(Rect r,int pad) {
   const int px=std::min(pad,r.width/2),py=std::min(pad,r.height/2);
   return {r.x+px,r.y+py,r.width-2*px,r.height-2*py};
 }
+inline Rect intersection(Rect a,Rect b) {
+  a.require_valid(); b.require_valid();
+  const int x=std::max(a.x,b.x), y=std::max(a.y,b.y);
+  const auto w=std::max<std::int64_t>(0,static_cast<std::int64_t>(std::min(a.right(),b.right()))-x);
+  const auto h=std::max<std::int64_t>(0,static_cast<std::int64_t>(std::min(a.bottom(),b.bottom()))-y);
+  return {x,y,static_cast<int>(w),static_cast<int>(h)};
+}
 // GEOMETRY API
 } // namespace hyprv4
