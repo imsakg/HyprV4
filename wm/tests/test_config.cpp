@@ -1,6 +1,7 @@
 #include "hyprv4/config.hpp"
 #include "check.hpp"
 #include <limits>
+#include <locale>
 #include <stdexcept>
 #include <string>
 
@@ -124,4 +125,51 @@ int main() {
     CHECK(live.terminal == "kitty" && live.ratio == 0.6 && !live.focus_follows_mouse);
     live.reload("");
     CHECK(same(live, defaults));
+
+    const auto serialized = saved.serialize();
+    CHECK(serialized.find("gap=3\nouter_gap=4\nborder=5\nmaster_count=2\nratio=") == 0);
+    CHECK(serialized.find("workspace_count=6\nfocus_follows_mouse=true\nterminal=foot\n") != std::string::npos);
+    CHECK(same(hyprv4::Config::parse(serialized), saved));
+    CHECK(hyprv4::Config::parse(serialized).serialize() == serialized);
+    CHECK(same(hyprv4::Config::parse(defaults.serialize()), defaults));
+    auto precise = saved;
+    precise.ratio = 0.12345678901234566;
+    precise.terminal = "/opt/term --title=dev desk";
+    CHECK(same(hyprv4::Config::parse(precise.serialize()), precise));
+    auto cannot_serialize = [](const hyprv4::Config& bad) {
+        try { (void)bad.serialize(); }
+        catch (const std::invalid_argument&) { return true; }
+        return false;
+    };
+    for (auto member : {&hyprv4::Config::gap, &hyprv4::Config::outer_gap, &hyprv4::Config::border}) {
+        auto bad = defaults;
+        bad.*member = -1;
+        CHECK(cannot_serialize(bad));
+    }
+    for (auto member : {&hyprv4::Config::master_count, &hyprv4::Config::workspace_count}) {
+        auto bad = defaults;
+        bad.*member = 0;
+        CHECK(cannot_serialize(bad));
+    }
+    for (double value : {0.0, 1.0, std::numeric_limits<double>::infinity(),
+                         std::numeric_limits<double>::quiet_NaN()}) {
+        auto bad = defaults;
+        bad.ratio = value;
+        CHECK(cannot_serialize(bad));
+    }
+    for (const auto* value : {"", " foot", "foot ", "foo#bar", "foo\nbar", "foo\tbar"}) {
+        auto bad = defaults;
+        bad.terminal = value;
+        CHECK(cannot_serialize(bad));
+    }
+    struct CommaDecimal : std::numpunct<char> {
+        char do_decimal_point() const override { return ','; }
+    };
+    const auto original_locale = std::locale();
+    std::locale::global(std::locale(std::locale::classic(), new CommaDecimal));
+    const auto locale_text = precise.serialize();
+    const auto locale_config = hyprv4::Config::parse(locale_text);
+    std::locale::global(original_locale);
+    CHECK(same(locale_config, precise));
+    CHECK(locale_text.find(',') == std::string::npos);
 }

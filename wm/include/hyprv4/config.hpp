@@ -2,6 +2,8 @@
 
 #include <charconv>
 #include <cmath>
+#include <iomanip>
+#include <limits>
 #include <locale>
 #include <set>
 #include <sstream>
@@ -21,6 +23,36 @@ struct Config {
     int workspace_count = 9;
     bool focus_follows_mouse = false;
     std::string terminal = "kitty";
+
+    // Public fields are convenient for callers; serialization still checks them.
+    void validate() const {
+        if (gap < 0 || outer_gap < 0 || border < 0 || master_count < 1 || workspace_count < 1) {
+            throw std::invalid_argument("invalid spacing or count in configuration");
+        }
+        if (!std::isfinite(ratio) || ratio <= 0.0 || ratio >= 1.0) {
+            throw std::invalid_argument("ratio must be finite and strictly between 0 and 1");
+        }
+        (void)terminal_text(terminal, 8);
+        if (terminal != trim(terminal)) {
+            throw std::invalid_argument("terminal must not have surrounding whitespace");
+        }
+    }
+
+    std::string serialize() const {
+        validate();
+        std::ostringstream output;
+        output.imbue(std::locale::classic());
+        output << std::setprecision(std::numeric_limits<double>::max_digits10)
+               << "gap=" << gap << '\n'
+               << "outer_gap=" << outer_gap << '\n'
+               << "border=" << border << '\n'
+               << "master_count=" << master_count << '\n'
+               << "ratio=" << ratio << '\n'
+               << "workspace_count=" << workspace_count << '\n'
+               << "focus_follows_mouse=" << (focus_follows_mouse ? "true" : "false") << '\n'
+               << "terminal=" << terminal << '\n';
+        return output.str();
+    }
 
     // Full replacement from defaults; parse errors never mutate the live object.
     void reload(const std::string& text) { *this = parse(text); }
