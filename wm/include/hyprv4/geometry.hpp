@@ -17,5 +17,10 @@ struct Rect {
   bool contains(int px,int py) const { return px>=x && py>=y && px<right() && py<bottom(); }
   friend bool operator==(Rect a,Rect b) { return a.x==b.x && a.y==b.y && a.width==b.width && a.height==b.height; }
 };
+inline Rect inset(Rect r,int pad) {
+  r.require_valid(); if(pad<0) throw std::invalid_argument("negative inset");
+  const int px=std::min(pad,r.width/2),py=std::min(pad,r.height/2);
+  return {r.x+px,r.y+py,r.width-2*px,r.height-2*py};
+}
 // GEOMETRY API
 } // namespace hyprv4
