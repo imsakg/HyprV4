@@ -140,7 +140,8 @@ public:
                 throw std::invalid_argument("action name must not contain whitespace or controls");
             }
         }
-        bindings_.insert_or_assign(chord, Binding{std::move(action), std::move(arguments)});
+        const auto inserted = bindings_.emplace(chord, Binding{std::move(action), std::move(arguments)});
+        if (!inserted.second) throw std::invalid_argument("duplicate binding: " + chord.to_string());
     }
 
     void bind(const std::string& chord, std::string action, std::vector<std::string> arguments = {}) {

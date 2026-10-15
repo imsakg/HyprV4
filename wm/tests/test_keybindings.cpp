@@ -128,4 +128,25 @@ int main() {
     try { bindings.bind("Ctrl++a", "noop"); }
     catch (const std::invalid_argument&) { malformed_bind = true; }
     CHECK(malformed_bind && bindings.size() == 3);
+
+    const auto original_launch = *bindings.lookup("Super+enter");
+    for (const auto* alias : {"Super+Return", "meta+ENTER", " Win + enter ", "Command+Return"}) {
+        bool collided = false;
+        try { bindings.bind(alias, "replacement", {"different"}); }
+        catch (const std::invalid_argument& error) {
+            collided = std::string(error.what()).find("Super+enter") != std::string::npos;
+        }
+        CHECK(collided && bindings.size() == 3);
+        CHECK(bindings.lookup("Super+enter")->action == original_launch.action);
+        CHECK(bindings.lookup("Super+enter")->arguments == original_launch.arguments);
+    }
+    bool typed_collision = false;
+    try {
+        bindings.bind(KeyChord::from_event("Return", mods::Super | mods::NumLock),
+                      original_launch.action, original_launch.arguments);
+    } catch (const std::invalid_argument&) { typed_collision = true; }
+    CHECK(typed_collision && bindings.size() == 3);
+    bindings.bind("Super+Shift+Return", "alternate");
+    CHECK(bindings.size() == 4);
+    CHECK(bindings.lookup("Super+Shift+enter")->action == "alternate");
 }
