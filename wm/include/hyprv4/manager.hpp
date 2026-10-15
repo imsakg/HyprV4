@@ -118,6 +118,8 @@ public:
     for(auto& rule:rules_) if(rule.workspace==id) rule.workspace=target;
     workspaces_.erase(id);
   }
+  void request_close(int id){get(id).close_requested=true;}
+  std::vector<int> close_requests() const {std::vector<int> ids;for(const auto& item:clients_) if(item.second.close_requested) ids.push_back(item.first);return ids;}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;

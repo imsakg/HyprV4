@@ -39,5 +39,6 @@ int main(){
   CHECK(wm.pointer_enter(-790,40)==10);CHECK(!wm.pointer_enter(9999,9999));
   wm.stash(12);CHECK(wm.find(12)->scratch);CHECK(wm.placements().size()==1);wm.restore(12);CHECK(!wm.find(12)->scratch);CHECK(wm.focused()==12);CHECK(wm.find(12)->floating);
   wm.remove_workspace(2,1);CHECK(wm.find(20)->workspace==1);CHECK(wm.find(30)->workspace==1);CHECK(wm.placements().size()==5);
+  wm.request_close(10);CHECK(wm.find(10));CHECK(wm.close_requests()==std::vector<int>{10});CHECK(wm.find(10)->close_requested);wm.request_close(10);CHECK(wm.close_requests().size()==1);
 // NEXT TEST
 }
