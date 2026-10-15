@@ -80,6 +80,13 @@ public:
   void minimize(int id,bool enabled){auto& w=get(id);w.minimized=enabled;if(enabled) w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
   void set_urgent(int id,bool urgent){auto& w=get(id);w.urgent=urgent && !(w.workspace==current_ && focused()==id);}
   void set_title(int id,std::string title){get(id).title=std::move(title);}
+  bool swap_focused(int direction){
+    if(!focused()) return false;
+    std::vector<int> ids;for(int id:ws().windows) if(!get(id).floating && !get(id).minimized && !get(id).scratch) ids.push_back(id);
+    const auto it=std::find(ids.begin(),ids.end(),*focused());if(it==ids.end() || ids.size()<2) return false;
+    const auto n=static_cast<std::int64_t>(ids.size());const auto i=it-ids.begin();const auto j=(i+static_cast<std::int64_t>(direction)%n+n)%n;
+    std::iter_swap(std::find(ws().windows.begin(),ws().windows.end(),ids[static_cast<std::size_t>(i)]),std::find(ws().windows.begin(),ws().windows.end(),ids[static_cast<std::size_t>(j)]));return true;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
