@@ -10,5 +10,7 @@ int main(){
   c.master_count=8;CHECK(master_stack(Rect{0,0,100,100},2,c)[0].width==100);
   c.master_count=1;c.outer_gap=7;c.gap=0;
   CHECK(master_stack(Rect{0,0,100,80},1,c)[0]==Rect{7,7,86,66});
+  auto mono=monocle(Rect{0,0,100,80},3,c);CHECK(mono.size()==3);
+  CHECK(mono[0]==Rect{7,7,86,66});CHECK(mono[2]==mono[0]);
 // NEXT TEST
 }

@@ -31,5 +31,9 @@ inline std::vector<Rect> master_stack(Rect area,int count,const Config& c) {
   auto stack=split({area.x+width+gap,area.y,usable-width,area.height},count-masters,c.gap);
   result.insert(result.end(),stack.begin(),stack.end()); return result;
 }
+inline std::vector<Rect> monocle(Rect area,int count,const Config& c) {
+  c.validate(); if(count<0 || count>100000) throw std::invalid_argument("invalid window count");
+  return std::vector<Rect>(static_cast<std::size_t>(count),inset(area,c.outer_gap));
+}
 // LAYOUT API
 } // namespace hyprv4
