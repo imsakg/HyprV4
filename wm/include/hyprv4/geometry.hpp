@@ -44,5 +44,12 @@ inline Rect clamp_to(Rect r,Rect area) {
   r.x=std::clamp(r.x,area.x,area.right()-r.width); r.y=std::clamp(r.y,area.y,area.bottom()-r.height);
   return r;
 }
+struct Insets { int left=0,right=0,top=0,bottom=0; };
+inline Rect reserve(Rect area,Insets i) {
+  area.require_valid(); if(i.left<0 || i.right<0 || i.top<0 || i.bottom<0) throw std::invalid_argument("negative reserved margin");
+  const int left=std::min(i.left,area.width),right=std::min(i.right,area.width-left);
+  const int top=std::min(i.top,area.height),bottom=std::min(i.bottom,area.height-top);
+  return {area.x+left,area.y+top,area.width-left-right,area.height-top-bottom};
+}
 // GEOMETRY API
 } // namespace hyprv4
