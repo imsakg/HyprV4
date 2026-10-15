@@ -40,6 +40,14 @@ public:
     auto found=clients_.find(id);if(found==clients_.end() || found->second.workspace!=current_) return false;
     ws().focused=id;return true;
   }
+  std::optional<int> cycle_focus(int direction) {
+    const auto& ids=ws().windows;if(ids.empty()) return std::nullopt;
+    const auto it=std::find(ids.begin(),ids.end(),ws().focused.value_or(-1));
+    const auto n=static_cast<std::int64_t>(ids.size());
+    const auto index=it==ids.end()?0:it-ids.begin();
+    const auto next=(index+static_cast<std::int64_t>(direction)%n+n)%n;
+    ws().focused=ids[static_cast<std::size_t>(next)];return ws().focused;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
