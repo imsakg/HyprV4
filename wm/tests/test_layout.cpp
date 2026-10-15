@@ -22,5 +22,7 @@ int main(){
   CHECK(arrange(Layout::Grid,Rect{0,0,80,80},3,c).size()==3);
   CHECK(arrange(Layout::Monocle,Rect{0,0,80,80},2,c)[1]==Rect{0,0,80,80});
   bool invalid_layout=false;try{arrange(static_cast<Layout>(99),Rect{},0,c);}catch(const std::invalid_argument&){invalid_layout=true;}CHECK(invalid_layout);
+  CHECK(content_rect(Rect{0,0,100,80},2)==Rect{2,2,96,76});
+  CHECK(content_rect(Rect{0,0,2,2},10)==Rect{1,1,0,0});
 // NEXT TEST
 }

@@ -63,5 +63,6 @@ inline std::vector<Rect> arrange(Layout layout,Rect area,int count,const Config&
   }
   throw std::invalid_argument("unknown layout");
 }
+inline Rect content_rect(Rect frame,int border) { return inset(frame,border); }
 // LAYOUT API
 } // namespace hyprv4
