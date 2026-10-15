@@ -41,4 +41,15 @@ int main() {
         CHECK(rejects(std::string("gap=") + value));
     }
     CHECK(rejects("gap=10\nborder=oops", 2));
+
+    for (const auto* key : {"gap", "outer_gap", "border"}) {
+        CHECK(rejects(std::string(key) + "=-1"));
+    }
+    for (const auto* key : {"master_count", "workspace_count"}) {
+        CHECK(rejects(std::string(key) + "=0"));
+        CHECK(rejects(std::string(key) + "=-1"));
+    }
+    const auto zero = hyprv4::Config::parse("gap=0\nouter_gap=0\nborder=0");
+    CHECK(zero.gap == 0 && zero.outer_gap == 0 && zero.border == 0);
+    CHECK(rejects("gap=0\nmaster_count=0", 2));
 }

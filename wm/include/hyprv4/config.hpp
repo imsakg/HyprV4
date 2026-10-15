@@ -30,11 +30,11 @@ struct Config {
             if (equals == std::string::npos) continue;
             const auto key = line.substr(0, equals);
             const auto value = line.substr(equals + 1);
-            if (key == "gap") result.gap = integer(value, number);
-            else if (key == "outer_gap") result.outer_gap = integer(value, number);
-            else if (key == "border") result.border = integer(value, number);
-            else if (key == "master_count") result.master_count = integer(value, number);
-            else if (key == "workspace_count") result.workspace_count = integer(value, number);
+            if (key == "gap") result.gap = integer(value, number, 0);
+            else if (key == "outer_gap") result.outer_gap = integer(value, number, 0);
+            else if (key == "border") result.border = integer(value, number, 0);
+            else if (key == "master_count") result.master_count = integer(value, number, 1);
+            else if (key == "workspace_count") result.workspace_count = integer(value, number, 1);
         }
         return result;
     }
@@ -44,12 +44,13 @@ private:
         throw std::invalid_argument("line " + std::to_string(line) + ": " + reason);
     }
 
-    static int integer(const std::string& value, std::size_t line) {
+    static int integer(const std::string& value, std::size_t line, int minimum) {
         int result = 0;
         const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result);
         if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size()) {
             fail(line, "expected a decimal integer");
         }
+        if (result < minimum) fail(line, "integer must be at least " + std::to_string(minimum));
         return result;
     }
 };
