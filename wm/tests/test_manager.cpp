@@ -32,5 +32,7 @@ int main(){
   Config changed;changed.gap=0;changed.outer_gap=0;changed.ratio=0.7;wm.set_config(changed);CHECK(wm.config().ratio==0.7);
   changed.ratio=2.0;bool config_error=false;try{wm.set_config(changed);}catch(const std::invalid_argument&){config_error=true;}CHECK(config_error);CHECK(wm.config().ratio==0.7);
   wm.set_output(Rect{-800,0,800,600});CHECK(wm.output()==Rect{-800,0,800,600});CHECK(wm.find(12)->frame.right()<=0);CHECK(wm.placements()[0].frame.x==-800);
+  wm.set_reserved(Insets{0,0,30,20});CHECK(wm.work_area()==Rect{-800,30,800,550});CHECK(wm.placements()[0].frame.y==30);
+  wm.set_fullscreen(10,true);CHECK(wm.placements()[0].frame==wm.output());wm.set_fullscreen(10,false);
 // NEXT TEST
 }

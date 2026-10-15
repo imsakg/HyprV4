@@ -53,7 +53,7 @@ public:
   std::vector<Placement> placements() const {
     for(int id:ws().windows) if(!clients_.at(id).minimized && !clients_.at(id).scratch && clients_.at(id).fullscreen) return {{id,output_}};
     int tiled=0;for(int id:ws().windows) if(!clients_.at(id).minimized && !clients_.at(id).scratch && !clients_.at(id).floating) ++tiled;
-    auto rects=arrange(ws().layout,output_,tiled,ws().config);
+    auto rects=arrange(ws().layout,work_area(),tiled,ws().config);
     std::vector<Placement> result;std::size_t index=0;
     for(int id:ws().windows) {const auto& w=clients_.at(id);if(w.minimized || w.scratch) continue;result.push_back({id,w.floating?w.frame:rects[index++]});}
     return result;
@@ -74,8 +74,8 @@ public:
     repair_focus(source);
     destination.windows.push_back(id);if(!destination.focused) destination.focused=id;window.workspace=target;
   }
-  void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,output_);}
-  void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,output_);}
+  void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,work_area());}
+  void configure(int id,Rect frame){auto& w=get(id);if(!w.floating) throw std::invalid_argument("cannot configure tiled client");w.frame=clamp_to(frame,work_area());}
   void set_fullscreen(int id,bool enabled){auto& w=get(id);if(enabled){for(int peer:workspaces_.at(w.workspace).windows) get(peer).fullscreen=false;workspaces_.at(w.workspace).focused=id;}w.fullscreen=enabled;}
   void minimize(int id,bool enabled){auto& w=get(id);w.minimized=enabled;if(enabled) w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
   void set_urgent(int id,bool urgent){auto& w=get(id);w.urgent=urgent && !(w.workspace==current_ && focused()==id);}
@@ -97,7 +97,9 @@ public:
   const Config& config() const {return ws().config;}
   void set_config(const Config& value){value.validate();ws().config=value;}
   Rect output() const {return output_;}
-  void set_output(Rect area){area.require_valid();if(area.width==0 || area.height==0) throw std::invalid_argument("empty output");output_=area;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,output_);}
+  void set_output(Rect area){area.require_valid();if(area.width==0 || area.height==0) throw std::invalid_argument("empty output");output_=area;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,work_area());}
+  Rect work_area() const {return reserve(output_,margins_);}
+  void set_reserved(Insets margins){(void)reserve(output_,margins);margins_=margins;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,work_area());}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
