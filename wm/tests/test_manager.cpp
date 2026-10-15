@@ -13,5 +13,7 @@ int main(){
   wm.manage(20);CHECK(wm.focused()==20);wm.switch_workspace(1);CHECK(wm.focused()==12);
   wm.move_to_workspace(13,2);CHECK(wm.find(13)->workspace==2);CHECK(wm.placements().size()==2);
   wm.switch_workspace(2);CHECK(wm.focused()==20);CHECK(wm.placements().size()==2);wm.switch_workspace(1);
+  wm.toggle_floating(12);CHECK(wm.find(12)->floating);CHECK(wm.placements().size()==2);
+  CHECK(wm.placements()[1].frame==Rect{100,100,640,480});
 // NEXT TEST
 }

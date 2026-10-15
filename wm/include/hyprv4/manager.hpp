@@ -51,9 +51,10 @@ public:
   void set_layout(Layout layout) {(void)arrange(layout,output_,0,ws().config);ws().layout=layout;}
   Layout layout() const {return ws().layout;}
   std::vector<Placement> placements() const {
-    auto rects=arrange(ws().layout,output_,static_cast<int>(ws().windows.size()),ws().config);
+    int tiled=0;for(int id:ws().windows) if(!clients_.at(id).floating) ++tiled;
+    auto rects=arrange(ws().layout,output_,tiled,ws().config);
     std::vector<Placement> result;std::size_t index=0;
-    for(int id:ws().windows) result.push_back({id,rects[index++]});
+    for(int id:ws().windows) {const auto& w=clients_.at(id);result.push_back({id,w.floating?w.frame:rects[index++]});}
     return result;
   }
   void add_workspace(int id) {
@@ -72,6 +73,7 @@ public:
     if(source.focused==id) source.focused=source.windows.empty()?std::nullopt:std::optional<int>(source.windows.back());
     destination.windows.push_back(id);if(!destination.focused) destination.focused=id;window.workspace=target;
   }
+  void toggle_floating(int id){auto& w=get(id);w.floating=!w.floating;w.frame=clamp_to(w.frame,output_);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
