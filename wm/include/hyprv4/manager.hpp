@@ -102,6 +102,11 @@ public:
   Rect work_area() const {return reserve(output_,margins_);}
   void set_reserved(Insets margins){(void)reserve(output_,margins);margins_=margins;for(auto& item:clients_) if(item.second.floating) item.second.frame=clamp_to(item.second.frame,work_area());}
   void add_rule(Rule rule){if(rule.app_id.empty() || (rule.workspace && !workspaces_.count(*rule.workspace))) throw std::invalid_argument("invalid rule");rules_.push_back(std::move(rule));}
+  std::optional<int> pointer_enter(int x,int y){
+    if(!config().focus_follows_mouse) return std::nullopt;
+    const auto visible=placements();for(auto it=visible.rbegin();it!=visible.rend();++it) if(it->frame.contains(x,y)){focus(it->id);return it->id;}
+    return std::nullopt;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;

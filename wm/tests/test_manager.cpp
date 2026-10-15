@@ -35,5 +35,7 @@ int main(){
   wm.set_reserved(Insets{0,0,30,20});CHECK(wm.work_area()==Rect{-800,30,800,550});CHECK(wm.placements()[0].frame.y==30);
   wm.set_fullscreen(10,true);CHECK(wm.placements()[0].frame==wm.output());wm.set_fullscreen(10,false);
   wm.add_rule(Rule{"dialog",true,2});wm.manage(30,"Save file","dialog");CHECK(wm.find(30)->workspace==2);CHECK(wm.find(30)->floating);CHECK(wm.current_workspace()==1);
+  auto pointer_config=wm.config();pointer_config.focus_follows_mouse=true;wm.set_config(pointer_config);
+  CHECK(wm.pointer_enter(-790,40)==10);CHECK(!wm.pointer_enter(9999,9999));
 // NEXT TEST
 }
