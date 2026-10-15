@@ -11,5 +11,7 @@ int main(){
   wm.set_layout(Layout::Monocle);CHECK(wm.placements()[0].frame==wm.placements()[2].frame);
   wm.add_workspace(2);wm.switch_workspace(2);CHECK(wm.placements().empty());CHECK(!wm.focus(10));
   wm.manage(20);CHECK(wm.focused()==20);wm.switch_workspace(1);CHECK(wm.focused()==12);
+  wm.move_to_workspace(13,2);CHECK(wm.find(13)->workspace==2);CHECK(wm.placements().size()==2);
+  wm.switch_workspace(2);CHECK(wm.focused()==20);CHECK(wm.placements().size()==2);wm.switch_workspace(1);
 // NEXT TEST
 }

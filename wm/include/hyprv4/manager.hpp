@@ -63,6 +63,15 @@ public:
   void switch_workspace(int id) {
     if(!workspaces_.count(id)) throw std::invalid_argument("unknown workspace");current_=id;
   }
+  void move_to_workspace(int id,int target) {
+    auto& window=get(id);if(!workspaces_.count(target)) throw std::invalid_argument("unknown workspace");
+    if(window.workspace==target) return;
+    auto& source=workspaces_.at(window.workspace);auto& destination=workspaces_.at(target);
+    if(destination.windows.size()>=100000) throw std::invalid_argument("workspace client limit");
+    source.windows.erase(std::remove(source.windows.begin(),source.windows.end(),id),source.windows.end());
+    if(source.focused==id) source.focused=source.windows.empty()?std::nullopt:std::optional<int>(source.windows.back());
+    destination.windows.push_back(id);if(!destination.focused) destination.focused=id;window.workspace=target;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
