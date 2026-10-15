@@ -21,6 +21,7 @@ inline std::vector<std::string> tokenize(const std::string& line){
 class CommandRunner {
 public:
   Manager state;KeyBindings keys;
+  void reload(const std::string& text){state.set_config(Config::parse(text));}
   std::string execute(const std::string& line){return execute_tokens(tokenize(line));}
   std::string execute_tokens(const std::vector<std::string>& args){
     if(args.empty()) return {};
@@ -38,6 +39,7 @@ public:
     else if(name=="close"){arity(args,2,2);state.request_close(number(args[1]));}
     else if(name=="configure"){arity(args,6,6);state.configure(number(args[1]),{number(args[2]),number(args[3]),number(args[4]),number(args[5])});}
     else if(name=="layout"){arity(args,2,2);if(args[1]=="master") state.set_layout(Layout::MasterStack);else if(args[1]=="monocle") state.set_layout(Layout::Monocle);else if(args[1]=="grid") state.set_layout(Layout::Grid);else if(args[1]=="bottom") state.set_layout(Layout::BottomStack);else throw std::invalid_argument("unknown layout");}
+    else if(name=="config"){arity(args,2,2);reload(args[1]);}
     // COMMAND ACTIONS
     else throw std::invalid_argument("unknown command: "+name);
     return "ok";

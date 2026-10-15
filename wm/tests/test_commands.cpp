@@ -10,5 +10,7 @@ int main(){
   runner.execute("cycle 1");CHECK(runner.state.focused()==2);
   runner.execute("workspace-add 2");runner.execute("move 2 2");runner.execute("workspace 2");runner.execute("floating 2");runner.execute("configure 2 10 20 300 200");CHECK(runner.state.find(2)->frame==Rect{10,20,300,200});
   runner.execute("layout grid");CHECK(runner.state.layout()==Layout::Grid);runner.execute("fullscreen 2 1");CHECK(runner.state.find(2)->fullscreen);
+  runner.reload("gap=3\nratio=0.4\n");CHECK(runner.state.config().gap==3);
+  bool reload=false;try{runner.reload("gap=99\nratio=nan");}catch(const std::invalid_argument&){reload=true;}CHECK(reload);CHECK(runner.state.config().gap==3);
 // NEXT TEST
 }
