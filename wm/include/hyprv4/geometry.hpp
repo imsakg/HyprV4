@@ -38,5 +38,11 @@ inline Rect translate(Rect r,int dx,int dy) {
   if(!r.valid()) throw std::overflow_error("rectangle edge overflow");
   return r;
 }
+inline Rect clamp_to(Rect r,Rect area) {
+  r.require_valid(); area.require_valid();
+  r.width=std::min(r.width,area.width); r.height=std::min(r.height,area.height);
+  r.x=std::clamp(r.x,area.x,area.right()-r.width); r.y=std::clamp(r.y,area.y,area.bottom()-r.height);
+  return r;
+}
 // GEOMETRY API
 } // namespace hyprv4

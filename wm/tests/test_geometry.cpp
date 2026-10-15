@@ -12,5 +12,7 @@ int main() {
   CHECK(intersection(Rect{0,0,10,10},Rect{20,20,4,4})==Rect{20,20,0,0});
   CHECK(translate(Rect{3,4,10,10},-8,6)==Rect{-5,10,10,10});
   bool overflow=false;try{translate(Rect{2147483640,0,1,1},20,0);}catch(const std::overflow_error&){overflow=true;} CHECK(overflow);
+  CHECK(clamp_to(Rect{-5,90,40,40},Rect{0,0,100,100})==Rect{0,60,40,40});
+  CHECK(clamp_to(Rect{5,5,300,200},Rect{10,20,100,80})==Rect{10,20,100,80});
 // NEXT TEST
 }
