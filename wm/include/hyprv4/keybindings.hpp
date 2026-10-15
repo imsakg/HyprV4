@@ -25,6 +25,7 @@ public:
             const auto token = lower(trim(text.substr(start, plus - start)));
             const auto bit = modifier(token);
             if (bit == 0) throw std::invalid_argument("unknown modifier: " + token);
+            if (mask & bit) throw std::invalid_argument("duplicate modifier: " + token);
             mask |= bit;
             start = plus + 1;
         }
@@ -68,6 +69,18 @@ private:
 
     static std::string canonical_key(const std::string& text) {
         const auto token = lower(trim(text));
+        if (token.empty() || modifier(token) != 0) {
+            throw std::invalid_argument("chord requires one non-modifier key");
+        }
+        const bool punctuation = token.size() == 1 && token[0] >= '!' &&
+                                 token[0] <= '~' && token[0] != '+';
+        if (!punctuation) {
+            for (char byte : token) {
+                if (!((byte >= 'a' && byte <= 'z') || (byte >= '0' && byte <= '9') || byte == '_')) {
+                    throw std::invalid_argument("key must be an ASCII identifier or single punctuation mark");
+                }
+            }
+        }
         if (token == "return") return "enter";
         if (token == "esc") return "escape";
         if (token == "spacebar") return "space";

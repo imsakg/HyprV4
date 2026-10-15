@@ -59,4 +59,16 @@ int main() {
         CHECK(KeyChord::parse(alias.first).to_string() == alias.second);
     }
     CHECK(KeyChord::parse("Option+Command+Return").to_string() == "Alt+Super+enter");
+
+    for (const auto* text : {"", "  \t", "Ctrl", "Control", "Ctrl+", "+a", "Ctrl++a",
+                             "a+b", "Ctrl+a+b", "Ctrl+Alt", "Ctrl+Ctrl+a", "Ctrl+Control+a",
+                             "Win+Super+a", "shift+SHIFT+a", "Ctrl,Alt+a", "CapsLock+a",
+                             "Ctrl+two words", "Ctrl+a\nb", "Ctrl+\r", "Ctrl+é"}) {
+        CHECK(bad_chord(text));
+    }
+    CHECK(bad_chord(std::string("Ctrl+ab") + '\0' + "cd"));
+    CHECK(bad_chord(std::string("Ctrl+") + static_cast<char>(127)));
+    for (const auto* text : {"0", "XF86AudioMute", "KP_Enter", "plus", "-", "=", ",", ".", "[", "]", "\\", ";", "'", "!"}) {
+        CHECK(KeyChord::parse(KeyChord::parse(text).to_string()) == KeyChord::parse(text));
+    }
 }
