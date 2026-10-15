@@ -59,6 +59,7 @@ public:
     auto rects=arrange(ws().layout,work_area(),tiled,ws().config);
     std::vector<Placement> result;std::size_t index=0;
     for(int id:ws().windows) {const auto& w=clients_.at(id);if(w.minimized || w.scratch) continue;result.push_back({id,w.floating?w.frame:rects[index++]});}
+    std::stable_partition(result.begin(),result.end(),[&](const Placement& p){return !clients_.at(p.id).floating;});
     return result;
   }
   void add_workspace(int id) {
