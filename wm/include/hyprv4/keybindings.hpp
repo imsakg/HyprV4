@@ -28,7 +28,7 @@ public:
             mask |= bit;
             start = plus + 1;
         }
-        return KeyChord(mask, lower(trim(text.substr(start))));
+        return KeyChord(mask, canonical_key(text.substr(start)));
     }
 
     const std::string& key() const noexcept { return key_; }
@@ -56,11 +56,30 @@ private:
     KeyChord(ModifierMask mask, std::string key) : modifiers_(mask), key_(std::move(key)) {}
 
     static ModifierMask modifier(const std::string& token) {
-        if (token == "ctrl") return modifiers::Ctrl;
-        if (token == "alt") return modifiers::Alt;
-        if (token == "super") return modifiers::Super;
+        if (token == "ctrl" || token == "control" || token == "ctl") return modifiers::Ctrl;
+        if (token == "alt" || token == "option" || token == "mod1") return modifiers::Alt;
+        if (token == "super" || token == "meta" || token == "win" || token == "windows" ||
+            token == "logo" || token == "mod4" || token == "cmd" || token == "command") {
+            return modifiers::Super;
+        }
         if (token == "shift") return modifiers::Shift;
         return 0;
+    }
+
+    static std::string canonical_key(const std::string& text) {
+        const auto token = lower(trim(text));
+        if (token == "return") return "enter";
+        if (token == "esc") return "escape";
+        if (token == "spacebar") return "space";
+        if (token == "del") return "delete";
+        if (token == "ins") return "insert";
+        if (token == "pgup" || token == "prior") return "pageup";
+        if (token == "pgdn" || token == "pgdown" || token == "next") return "pagedown";
+        if (token == "arrowleft") return "left";
+        if (token == "arrowright") return "right";
+        if (token == "arrowup") return "up";
+        if (token == "arrowdown") return "down";
+        return token;
     }
 
     static std::string trim(const std::string& text) {

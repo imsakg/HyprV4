@@ -4,6 +4,7 @@
 #include <array>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 static bool bad_chord(const std::string& text) {
     try { (void)hyprv4::KeyChord::parse(text); }
@@ -14,7 +15,7 @@ static bool bad_chord(const std::string& text) {
 int main() {
     using hyprv4::KeyChord;
     CHECK(KeyChord::parse("A").key() == "a");
-    CHECK(KeyChord::parse("  ReTuRn\t").key() == "return");
+    CHECK(KeyChord::parse("  ReTuRn\t").key() == "enter");
     CHECK(KeyChord::parse("F12").to_string() == "f12");
     CHECK(KeyChord::parse("/").key() == "/");
     CHECK(KeyChord::parse("a") == KeyChord::parse("A"));
@@ -37,4 +38,25 @@ int main() {
     CHECK(KeyChord::parse(KeyChord::parse("super+shift+F2").to_string()) ==
           KeyChord::parse("Shift+Super+f2"));
     CHECK(bad_chord("Hyper+a"));
+
+    for (const auto* alias : {"Control", "CTL"}) {
+        CHECK(KeyChord::parse(std::string(alias) + "+A") == KeyChord::parse("Ctrl+a"));
+    }
+    for (const auto* alias : {"Option", "Mod1"}) {
+        CHECK(KeyChord::parse(std::string(alias) + "+a") == KeyChord::parse("Alt+a"));
+    }
+    for (const auto* alias : {"Meta", "Win", "Windows", "Logo", "Mod4", "Cmd", "Command"}) {
+        CHECK(KeyChord::parse(std::string(alias) + "+a") == KeyChord::parse("Super+a"));
+    }
+    for (const auto& alias : {std::pair{"Return", "enter"}, {"Esc", "escape"},
+                              {"Spacebar", "space"}, {"Del", "delete"}, {"Ins", "insert"},
+                              {"PgUp", "pageup"}, {"Prior", "pageup"},
+                              {"PgDn", "pagedown"}, {"PgDown", "pagedown"}, {"Next", "pagedown"},
+                              {"ArrowLeft", "left"}, {"ArrowRight", "right"},
+                              {"ArrowUp", "up"}, {"ArrowDown", "down"}}) {
+        CHECK(KeyChord::parse(std::string("Ctrl+") + alias.first) ==
+              KeyChord::parse(std::string("Control+") + alias.second));
+        CHECK(KeyChord::parse(alias.first).to_string() == alias.second);
+    }
+    CHECK(KeyChord::parse("Option+Command+Return").to_string() == "Alt+Super+enter");
 }
