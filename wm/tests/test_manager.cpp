@@ -37,5 +37,6 @@ int main(){
   wm.add_rule(Rule{"dialog",true,2});wm.manage(30,"Save file","dialog");CHECK(wm.find(30)->workspace==2);CHECK(wm.find(30)->floating);CHECK(wm.current_workspace()==1);
   auto pointer_config=wm.config();pointer_config.focus_follows_mouse=true;wm.set_config(pointer_config);
   CHECK(wm.pointer_enter(-790,40)==10);CHECK(!wm.pointer_enter(9999,9999));
+  wm.stash(12);CHECK(wm.find(12)->scratch);CHECK(wm.placements().size()==1);wm.restore(12);CHECK(!wm.find(12)->scratch);CHECK(wm.focused()==12);CHECK(wm.find(12)->floating);
 // NEXT TEST
 }

@@ -107,6 +107,8 @@ public:
     const auto visible=placements();for(auto it=visible.rbegin();it!=visible.rend();++it) if(it->frame.contains(x,y)){focus(it->id);return it->id;}
     return std::nullopt;
   }
+  void stash(int id){auto& w=get(id);w.scratch=true;w.fullscreen=false;repair_focus(workspaces_.at(w.workspace));}
+  void restore(int id){get(id);move_to_workspace(id,current_);auto& w=get(id);w.scratch=false;w.minimized=false;w.floating=true;w.frame=clamp_to(w.frame,work_area());focus(id);}
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
