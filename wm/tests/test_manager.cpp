@@ -25,5 +25,6 @@ int main(){
   wm.set_urgent(12,true);CHECK(!wm.find(12)->urgent);wm.focus(10);
   wm.set_title(10,"Terminal — build output");CHECK(wm.find(10)->title=="Terminal — build output");
   wm.toggle_floating(12);wm.focus(10);CHECK(wm.swap_focused(1));CHECK(wm.placements()[0].id==12);CHECK(wm.focused()==10);
+  CHECK(wm.promote_master());CHECK(wm.placements()[0].id==10);CHECK(wm.focused()==10);
 // NEXT TEST
 }

@@ -87,6 +87,11 @@ public:
     const auto n=static_cast<std::int64_t>(ids.size());const auto i=it-ids.begin();const auto j=(i+static_cast<std::int64_t>(direction)%n+n)%n;
     std::iter_swap(std::find(ws().windows.begin(),ws().windows.end(),ids[static_cast<std::size_t>(i)]),std::find(ws().windows.begin(),ws().windows.end(),ids[static_cast<std::size_t>(j)]));return true;
   }
+  bool promote_master(){
+    if(!focused() || get(*focused()).floating) return false;
+    auto& ids=ws().windows;const auto it=std::find(ids.begin(),ids.end(),*focused());
+    const int id=*it;ids.erase(it);ids.insert(ids.begin(),id);return true;
+  }
   // MANAGER API
 private:
   std::map<int,Window> clients_;std::map<int,Workspace> workspaces_;int current_=1;
